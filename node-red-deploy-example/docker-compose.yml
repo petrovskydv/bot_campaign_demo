@@ -1,0 +1,12 @@
+version: "3.3"
+
+services:
+  node-red:
+    image: nodered/node-red
+    environment:
+      - TZ=Europe/Moscow
+    ports:
+      - "11880:1880" # 11880 - порт для подключения к контейнеру, 1880 - порт на котором работает node-red внутри контейнера.
+    volumes:
+      - "./node-red:/data" # node-red - каталог который выделит docker для хранения данных, /data - каталог внутри контейнера.
+    restart: always
