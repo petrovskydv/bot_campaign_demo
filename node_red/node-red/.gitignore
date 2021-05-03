@@ -4,5 +4,8 @@ node_modules/
 *.backup
 .npm/
 
+
 settings.js
+package-lock.json
+
 flows_cred.json
