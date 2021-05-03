@@ -1,0 +1,8 @@
+lib/
+node_modules/
+.config.*
+*.backup
+.npm/
+
+settings.js
+flows_cred.json

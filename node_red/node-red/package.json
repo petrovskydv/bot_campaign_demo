@@ -1,0 +1,11 @@
+{
+    "name": "node-red-project",
+    "description": "A Node-RED Project",
+    "version": "0.0.1",
+    "private": true,
+    "dependencies": {
+        "node-red-contrib-chatbot": "~0.19.7",
+        "node-red-contrib-image-tools": "~1.4.0",
+        "node-red-contrib-telegrambot": "~9.4.0"
+    }
+}
