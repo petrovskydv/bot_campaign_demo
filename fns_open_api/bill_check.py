@@ -7,7 +7,7 @@ import requests
 from dotenv import load_dotenv
 from contextlib import contextmanager
 
-from irkkt_lib import (
+from .irkkt_lib import (
     get_session_id, get_bill_check_id, get_bill_check_info
 )
 
