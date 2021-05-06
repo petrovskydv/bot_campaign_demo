@@ -1,7 +1,12 @@
 venv
 .venv
-env
 .virtualenv
+.idea
 .git
+db.sqlite3
 __pycache__
+*.pytest_cache
+postgres-data
 *.env
+static
+media
