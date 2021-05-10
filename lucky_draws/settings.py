@@ -140,3 +140,7 @@ ROLLBAR = {
 }
 
 rollbar.init(**ROLLBAR)
+
+INN=env.int('INN', 0)
+PASSWORD=env.str('PASSWORD', '')
+CLIENT_SECRET=env.str('CLIENT_SECRET', '')

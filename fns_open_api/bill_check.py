@@ -28,6 +28,12 @@ def handle_errors(inn, client_secret, password):
         print(error)
 
 
+def fetch_bill_check_info(qr_code, inn, client_secret, password):
+    session_id = get_session_id(inn, client_secret, password)
+    bill_check_id = get_bill_check_id(session_id, qr_code)
+    return get_bill_check_info(bill_check_id, session_id)
+
+
 @click.command()
 @click.option('-t', prompt='timestamp, время, когда вы осуществили покупку')
 @click.option('-s', prompt='сумма чека')
@@ -43,9 +49,9 @@ def main(t, s, fn, i, fp, qr):
     password = os.getenv('PASSWORD')
     with handle_errors(inn, client_secret, password):
         qr_code = qr if qr else f't={t}&s={s}&fn={fn}&i={i}&fp={fp}&n=1'
-        session_id = get_session_id(inn, client_secret, password)
-        bill_check_id = get_bill_check_id(session_id, qr_code)
-        bill_check_info = get_bill_check_info(bill_check_id, session_id)
+        bill_check_info = fetch_bill_check_info(
+            qr_code, inn, client_secret, password
+        )
         print(json.dumps(bill_check_info, indent=4, ensure_ascii=False))
 
 
