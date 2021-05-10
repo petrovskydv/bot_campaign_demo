@@ -1,9 +1,10 @@
 from django.db import models
+from django.utils.html import format_html
 from phonenumber_field.modelfields import PhoneNumberField
 
 
 class Customer(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField('Зарегистрирован', auto_now_add=True)
     username = models.CharField('Юзернейм', max_length=64, blank=True, null=True)
     first_name = models.CharField('Имя', max_length=64, blank=True, null=True)
     telegram_chat_id = models.PositiveIntegerField('Telegram chat ID')
@@ -19,12 +20,15 @@ class Customer(models.Model):
 
 
 class Receipt(models.Model):
-    uploaded_at = models.DateTimeField(auto_now_add=True)
+    uploaded_at = models.DateTimeField('Загружен', auto_now_add=True)
     image = models.ImageField('Фото чека', upload_to='receipts')
     customer = models.ForeignKey(Customer, verbose_name='Участник', on_delete=models.PROTECT, related_name='receipts')
 
     def __str__(self):
         return f'{self.uploaded_at}'
+
+    def get_preview(self):
+        return format_html(f'<img src="{self.image.url}" width="300">')
 
     class Meta:
         ordering = ['-uploaded_at']
