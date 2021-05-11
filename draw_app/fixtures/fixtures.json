@@ -1,0 +1,107 @@
+[
+    {
+        "model": "draw_app.Customer",
+        "pk": 1,
+        "fields": {
+            "created_at": "2021-05-11 11:36:03.596798",
+            "username": "John",
+            "first_name": "Lennon",
+            "telegram_chat_id": 12345,
+            "phone": "89185009090"
+        }
+    },
+    {
+        "model": "draw_app.Customer",
+        "pk": 2,
+        "fields": {
+            "created_at": "2021-05-11 11:36:03.596819",
+            "username": "Paul",
+            "first_name": "McCartney",
+            "telegram_chat_id": 54321,
+            "phone": "+79513001010"
+        }
+    },
+    {
+        "model": "draw_app.Customer",
+        "pk": 3,
+        "fields": {
+            "created_at": "2021-05-11 11:36:03.596823",
+            "username": "Ivan12345",
+            "first_name": "Ivan",
+            "telegram_chat_id": 98765,
+            "phone": "79198006060"
+        }
+    },
+    {
+        "model": "draw_app.Receipt",
+        "pk": 1,
+        "fields": {
+            "uploaded_at": "2021-05-11 11:36:03.596826",
+            "image": "test-receipt-foto-1.png",
+            "customer": 1
+        }
+    },
+    {
+        "model": "draw_app.Receipt",
+        "pk": 2,
+        "fields": {
+            "uploaded_at": "2021-05-11 11:36:03.596830",
+            "image": "test-receipt-foto-2.png",
+            "customer": 2
+        }
+    },
+    {
+        "model": "draw_app.Receipt",
+        "pk": 3,
+        "fields": {
+            "uploaded_at": "2021-05-11 11:36:03.596832",
+            "image": "test-receipt-foto-3.png",
+            "customer": 3
+        }
+    },
+    {
+        "model": "draw_app.Receipt",
+        "pk": 4,
+        "fields": {
+            "uploaded_at": "2021-05-11 11:36:03.596835",
+            "image": "test-receipt-foto-4.png",
+            "customer": 3
+        }
+    },
+    {
+        "model": "draw_app.FnsOrder",
+        "pk": 1,
+        "fields": {
+            "receipt": 1,
+            "first_request_at": "2021-05-11 11:36:03.596838",
+            "last_request_at": "2021-05-11 11:36:03.596840",
+            "qr_recognized": "t=20200727T1117&s=4850.00&fn=9287440300634471&i=13571&fp=3730902192&n=1",
+            "status": 1,
+            "answer": {}
+        }
+    },
+    {
+        "model": "draw_app.FnsOrder",
+        "pk": 2,
+        "fields": {
+            "receipt": 1,
+            "first_request_at": "2021-05-11 11:36:03.596844",
+            "last_request_at": "2021-05-11 11:36:03.596846",
+            "qr_recognized": "t=20210503T1340&s=120.98&fn=9280440301237466&i=26723&fp=72696611&n=1",
+            "status": 2,
+            "answer": {}
+        }
+    },
+    {
+        "model": "draw_app.FnsOrder",
+        "pk": 3,
+        "fields": {
+            "receipt": 1,
+            "first_request_at": "2021-05-11 11:36:03.596849",
+            "last_request_at": "2021-05-11 11:36:03.596852",
+            "qr_recognized": "t=20210501T1923&s=130.97&fn=9280440301360090&i=3799&fp=1916102250&n=1",
+            "status": 3,
+            "answer": {}
+        }
+    }
+]

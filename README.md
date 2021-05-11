@@ -46,6 +46,11 @@ $ docker ps
 ```bash
 $ python manage.py migrate
 ```
+Наполнение базы тестовыми данными:
+
+```bash
+$ python manage.py loaddata fixtures
+```
 
 Запуск сервера локально:
 
