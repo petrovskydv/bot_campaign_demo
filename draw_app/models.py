@@ -3,6 +3,14 @@ from django.utils.html import format_html
 from phonenumber_field.modelfields import PhoneNumberField
 
 
+TYPES_OF_STATUS = (
+    ('raw', 'не обработан'),
+    ('sent', 'отправлен'),
+    ('received', 'получен'),
+    ('closed', 'закрыт'),
+)
+
+
 class Customer(models.Model):
     created_at = models.DateTimeField('Зарегистрирован', auto_now_add=True, db_index=True)
     username = models.CharField('Юзернейм', max_length=64, blank=True, null=True)
@@ -42,24 +50,28 @@ class FnsOrderQuerySet(models.QuerySet):
 
 
 class FnsOrder(models.Model):
-    SENT = 1
-    RECEIVED = 2
-    NOT_RECEIVED = 3
-    EXPIRED = 4
 
-    STATUS_CHOICES = [
-        [SENT, 'Запрос отправлен'],
-        [RECEIVED, 'Ответ получен'],
-        [NOT_RECEIVED, 'Ответа еще нет'],
-        [EXPIRED, 'Истек срок'],
-    ]
-
-    receipt = models.ForeignKey(Receipt, verbose_name='Чек', on_delete=models.PROTECT, related_name='fns_orders')
-    first_request_at = models.DateTimeField('Время первого запроса', auto_now_add=True, db_index=True)
-    last_request_at = models.DateTimeField('Время последнего запроса', auto_now=True, db_index=True)
-    qr_recognized = models.CharField('Распознанный qr', max_length=128, db_index=True)
-    status = models.PositiveSmallIntegerField('Статус', choices=STATUS_CHOICES, default=SENT, db_index=True)
-    answer = models.JSONField('Ответ налоговой', default=dict, blank=True, db_index=True)
+    receipt = models.ForeignKey(
+        Receipt, verbose_name='Чек',
+        on_delete=models.PROTECT,
+        related_name='fns_orders'
+    )
+    first_request_at = models.DateTimeField(
+        'Время первого запроса', auto_now_add=True, db_index=True
+    )
+    last_request_at = models.DateTimeField(
+        'Время последнего запроса', auto_now=True, db_index=True
+    )
+    qr_recognized = models.CharField(
+        'Распознанный qr', max_length=128, db_index=True
+    )
+    status = models.CharField(
+        verbose_name='Статус', choices=TYPES_OF_STATUS,
+        max_length=25, default='raw', db_index=True,
+    )
+    answer = models.JSONField(
+        'Ответ налоговой', default=dict, blank=True, db_index=True
+    )
 
     objects = FnsOrderQuerySet.as_manager()
 
