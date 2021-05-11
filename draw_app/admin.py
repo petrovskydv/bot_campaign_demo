@@ -16,6 +16,7 @@ class FnsInline(admin.TabularInline):
     model = FnsOrder
     extra = 1
     can_delete = False
+    readonly_fields = ['answer']
 
 
 @admin.register(Customer)
@@ -42,6 +43,7 @@ class FnsOrderAdmin(admin.ModelAdmin):
         'status',
     ]
     list_filter = ['first_request_at', 'last_request_at']
+    readonly_fields = ['answer']
 
 
 @admin.register(Receipt)

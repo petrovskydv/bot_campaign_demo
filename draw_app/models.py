@@ -4,11 +4,11 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 
 class Customer(models.Model):
-    created_at = models.DateTimeField('Зарегистрирован', auto_now_add=True)
+    created_at = models.DateTimeField('Зарегистрирован', auto_now_add=True, db_index=True)
     username = models.CharField('Юзернейм', max_length=64, blank=True, null=True)
     first_name = models.CharField('Имя', max_length=64, blank=True, null=True)
-    telegram_chat_id = models.PositiveIntegerField('Telegram chat ID')
-    phone = PhoneNumberField('Телефон', blank=True, null=True)
+    telegram_chat_id = models.PositiveIntegerField('Telegram chat ID', db_index=True)
+    phone = PhoneNumberField('Телефон', blank=True, null=True, db_index=True)
 
     def __str__(self):
         return self.username
@@ -20,7 +20,7 @@ class Customer(models.Model):
 
 
 class Receipt(models.Model):
-    uploaded_at = models.DateTimeField('Загружен', auto_now_add=True)
+    uploaded_at = models.DateTimeField('Загружен', auto_now_add=True, db_index=True)
     image = models.ImageField('Фото чека', upload_to='receipts')
     customer = models.ForeignKey(Customer, verbose_name='Участник', on_delete=models.PROTECT, related_name='receipts')
 
@@ -50,11 +50,12 @@ class FnsOrder(models.Model):
     ]
 
     receipt = models.ForeignKey(Receipt, verbose_name='Чек', on_delete=models.PROTECT, related_name='fns_orders')
-    first_request_at = models.DateTimeField('Время первого запроса', auto_now_add=True)
-    last_request_at = models.DateTimeField('Время последнего запроса', auto_now=True)
-    qr_recognized = models.CharField('Распознанный qr', max_length=128)
-    status = models.PositiveSmallIntegerField('Статус', choices=STATUS_CHOICES, default=SENT)
-    answer = models.JSONField('Ответ налоговой', default=dict, blank=True)
+    first_request_at = models.DateTimeField('Время первого запроса', auto_now_add=True, db_index=True)
+    last_request_at = models.DateTimeField('Время последнего запроса', auto_now=True, db_index=True)
+    qr_recognized = models.CharField('Распознанный qr', max_length=128, db_index=True)
+    status = models.PositiveSmallIntegerField('Статус', choices=STATUS_CHOICES, default=SENT, db_index=True)
+    answer = models.JSONField('Ответ налоговой', default=dict, blank=True, db_index=True)
+
 
     def __str__(self):
         return f'{self.first_request_at}'
