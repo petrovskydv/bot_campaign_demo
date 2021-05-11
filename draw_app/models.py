@@ -36,6 +36,11 @@ class Receipt(models.Model):
         verbose_name_plural = 'Чеки'
 
 
+class FnsOrderQuerySet(models.QuerySet):
+    def raw(self):
+        return self.filter(answer__exact={}, status__in=[1, 3])
+
+
 class FnsOrder(models.Model):
     SENT = 1
     RECEIVED = 2
@@ -56,6 +61,7 @@ class FnsOrder(models.Model):
     status = models.PositiveSmallIntegerField('Статус', choices=STATUS_CHOICES, default=SENT, db_index=True)
     answer = models.JSONField('Ответ налоговой', default=dict, blank=True, db_index=True)
 
+    objects = FnsOrderQuerySet.as_manager()
 
     def __str__(self):
         return f'{self.first_request_at}'
