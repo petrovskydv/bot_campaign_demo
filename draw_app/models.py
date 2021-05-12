@@ -18,13 +18,13 @@ class Customer(models.Model):
     telegram_chat_id = models.PositiveIntegerField('Telegram chat ID', db_index=True)
     phone = PhoneNumberField('Телефон', blank=True, null=True, db_index=True)
 
-    def __str__(self):
-        return self.username
-
     class Meta:
         ordering = ['-created_at']
         verbose_name = 'Участник'
         verbose_name_plural = 'Участники'
+
+    def __str__(self):
+        return self.username
 
 
 class Receipt(models.Model):
@@ -32,16 +32,16 @@ class Receipt(models.Model):
     image = models.ImageField('Фото чека', upload_to='receipts')
     customer = models.ForeignKey(Customer, verbose_name='Участник', on_delete=models.PROTECT, related_name='receipts')
 
+    class Meta:
+        ordering = ['-uploaded_at']
+        verbose_name = 'Чек'
+        verbose_name_plural = 'Чеки'
+
     def __str__(self):
         return f'{self.uploaded_at}'
 
     def get_preview(self):
         return format_html(f'<img src="{self.image.url}" width="300">')
-
-    class Meta:
-        ordering = ['-uploaded_at']
-        verbose_name = 'Чек'
-        verbose_name_plural = 'Чеки'
 
 
 class FnsOrderQuerySet(models.QuerySet):
@@ -75,10 +75,10 @@ class FnsOrder(models.Model):
 
     objects = FnsOrderQuerySet.as_manager()
 
-    def __str__(self):
-        return f'{self.first_request_at}'
-
     class Meta:
         ordering = ['-last_request_at']
         verbose_name = 'Запрос к ФНС'
         verbose_name_plural = 'Запросы к ФНС'
+
+    def __str__(self):
+        return f'{self.first_request_at}'
