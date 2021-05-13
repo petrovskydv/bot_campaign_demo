@@ -10,12 +10,12 @@ from dbr import (
 )
 
 from draw_app.models import FnsOrder
+from draw_app.notify_rollbar import notify_rollbar
 from qr_codes_recognition.barcode_reader import (
     init_runtime_settings,
     set_barcode_format,
-    decode_file
+    decode_file_stream
 )
-from draw_app.notify_rollbar import notify_rollbar
 
 
 class ScanFinish(Exception):
