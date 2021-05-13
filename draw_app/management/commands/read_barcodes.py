@@ -53,12 +53,14 @@ def handle_images():
         def run_func(options):
             qr_codes = []
             if options.get('img'):
-                qr_codes.extend(func(options, options.get('img')))
+                with open(options.get('img'), "rb") as file_handler:
+                    qr_codes.extend(func(options, file_handler.read()))
             else:
                 raw_orders = FnsOrder.objects.raw().select_related('receipt').all()
                 for raw_order in raw_orders:
                     with handle_errors():
-                        qr_codes.extend(func(options, raw_order.receipt.image.path))
+                        image_buffer = open(raw_order.receipt.image.path, "rb").read()
+                        qr_codes.extend(func(options, image_buffer))
             # TODO Заглушка. Здесь обработка записи распознанных кодов в базу данных
             print(qr_codes)
         return run_func
@@ -66,7 +68,7 @@ def handle_images():
 
 
 @handle_images()
-def read_barcodes(options, image_path):
+def read_barcodes(options, image):
 
     reader = BarcodeReader()
     reader.init_license(settings.DYNAM_LICENSE_KEY)
@@ -74,4 +76,4 @@ def read_barcodes(options, image_path):
     init_runtime_settings(reader, settings.RECOGNITION_QUALITY, STATIC_ROOT)
     set_barcode_format(reader, settings.BARCODE_FORMAT, STATIC_ROOT)
 
-    return decode_file(reader, image_path)
+    return decode_file_stream(reader, image)
