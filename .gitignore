@@ -11,3 +11,4 @@ postgres-data
 *.env
 static
 media
+qr_codes_recognition/barcode_reader.py

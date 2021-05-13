@@ -46,7 +46,7 @@ class Receipt(models.Model):
 
 class FnsOrderQuerySet(models.QuerySet):
     def raw(self):
-        return self.filter(answer__exact={}, status__in=[1, 3])
+        return self.filter(answer__exact={}, status__in=['raw'])
 
 
 class FnsOrder(models.Model):
