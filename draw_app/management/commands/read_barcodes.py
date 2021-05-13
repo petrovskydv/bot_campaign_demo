@@ -27,7 +27,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             '--img', nargs='?', type=str,
-            help='путь к каталогу с изображениями для сканирования qr-кодов'
+            help='путь к изображению для сканирования qr-кодов'
         )
 
     def handle(self, *args, **options):
