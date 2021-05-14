@@ -18,10 +18,6 @@ from qr_codes_recognition.barcode_reader import (
 )
 
 
-class ScanFinish(Exception):
-    pass
-
-
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
@@ -59,8 +55,8 @@ def handle_images():
                 raw_orders = FnsOrder.objects.raw().select_related('receipt').all()
                 for raw_order in raw_orders:
                     with handle_errors():
-                        image_buffer = open(raw_order.receipt.image.path, "rb").read()
-                        qr_codes.extend(func(options, image_buffer))
+                        image_in_bytes = open(raw_order.receipt.image.path, "rb").read()
+                        qr_codes.extend(func(options, image_in_bytes))
             # TODO Заглушка. Здесь обработка записи распознанных кодов в базу данных
             print(qr_codes)
         return run_func
