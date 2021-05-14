@@ -114,7 +114,10 @@ docker ps
 Тест работы с очередью (на указанный `telegram_chat_id` прилетит ответ от налоговой):
 ```
 python manage.py qr_to_queue <telegram_chat_id> <qr>
-Пример: 
+```
+Пример:
+```
+python manage.py qr_to_queue 12345 "t=20200727T1117&s=4850.00&fn=9287440300634471&i=13571&fp=3730902192&n=1"
 ```
 Мониторинг очереди:
 ```
