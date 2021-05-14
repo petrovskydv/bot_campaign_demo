@@ -1,6 +1,4 @@
-import functools
 from contextlib import contextmanager, suppress
-from lucky_draws.settings import STATIC_ROOT
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -43,33 +41,28 @@ def handle_errors():
         raise CommandError(error)
 
 
-def handle_images():
-    def wrap(func):
-        @functools.wraps(func)
-        def run_func(options):
-            qr_codes = []
-            if options.get('img'):
-                with open(options.get('img'), "rb") as file_handler:
-                    qr_codes.extend(func(options, file_handler.read()))
-            else:
-                raw_orders = FnsOrder.objects.raw().select_related('receipt').all()
-                for raw_order in raw_orders:
-                    with handle_errors():
-                        image_in_bytes = open(raw_order.receipt.image.path, "rb").read()
-                        qr_codes.extend(func(options, image_in_bytes))
-            # TODO Заглушка. Здесь обработка записи распознанных кодов в базу данных
-            print(qr_codes)
-        return run_func
-    return wrap
+def read_barcodes(options):
+    qr_codes = []
+    if options.get('img'):
+        with open(options.get('img'), "rb") as file_handler:
+            # Список здесь нужен т.к. на одном чеке может быть несколько баркодов
+            qr_codes.extend(read_barcode(options, file_handler.read()))
+    else:
+        raw_orders = FnsOrder.objects.raw().select_related('receipt').all()
+        for raw_order in raw_orders:
+            with handle_errors():
+                image_in_bytes = open(raw_order.receipt.image.path, "rb").read()
+                qr_codes.extend(read_barcode(options, image_in_bytes))
+    # TODO Заглушка. Здесь обработка записи распознанных кодов в базу данных
+    print(qr_codes)
 
 
-@handle_images()
-def read_barcodes(options, image):
+def read_barcode(options, image):
 
     reader = BarcodeReader()
     reader.init_license(settings.DYNAM_LICENSE_KEY)
 
-    init_runtime_settings(reader, settings.RECOGNITION_QUALITY, STATIC_ROOT)
-    set_barcode_format(reader, settings.BARCODE_FORMAT, STATIC_ROOT)
+    init_runtime_settings(reader, settings.RECOGNITION_QUALITY)
+    set_barcode_format(reader, settings.BARCODE_FORMAT)
 
     return decode_file_stream(reader, image)

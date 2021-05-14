@@ -25,27 +25,29 @@ BARCODE_FORMAT = {
     'GS1 Composite': '21', 'Postal  Code': '22', 'DotCode': '23'
 }
 
+settings_path = 'qr_codes_recognition'
 
-def get_barcode_settings(recognition_quality, settings_path=''):
+
+def get_barcode_settings(recognition_quality):
     with open(os.path.join(settings_path, 'qrcode_settings.json'), 'r') as file_handler:
         settings = json.load(file_handler)
         return settings[GROUPS_OF_SETTING[recognition_quality]]
 
 
-def get_barcode_format(barcode_format, settings_path=''):
+def get_barcode_format(barcode_format):
     with open(os.path.join(settings_path, 'barcode_format.json'), 'r') as file_handler:
         formats = json.load(file_handler)
         return formats[BARCODE_FORMAT[barcode_format]]
 
 
-def init_runtime_settings(reader, recognition_quality, settings_path=''):
-    barcode_settings = get_barcode_settings(recognition_quality, settings_path)
+def init_runtime_settings(reader, recognition_quality):
+    barcode_settings = get_barcode_settings(recognition_quality)
     if barcode_settings:
         reader.init_runtime_settings_with_string(barcode_settings)
 
 
-def set_barcode_format(reader, barcode_format, settings_path=''):
-    barcode_format_ids = get_barcode_format(barcode_format, settings_path)
+def set_barcode_format(reader, barcode_format):
+    barcode_format_ids = get_barcode_format(barcode_format)
     if barcode_format:
         settings = reader.get_runtime_settings()
         settings.barcode_format_ids, \
@@ -84,15 +86,19 @@ def decode_file_stream(reader, image):
 
 
 def main():
+    global settings_path
+
     env = Env()
     env.read_env()
+
+    settings_path = ''
 
     license_key = env.str('DYNAM_LICENSE_KEY', '')
 
     reader = BarcodeReader()
     reader.init_license(license_key)
 
-    init_runtime_settings(reader, 'Best Coverage Settings')
+    init_runtime_settings(reader, 'Super Best Coverage Settings')
     set_barcode_format(reader, 'QR Code')
 
     images = []
