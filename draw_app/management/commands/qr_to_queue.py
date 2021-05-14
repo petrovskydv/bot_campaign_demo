@@ -58,13 +58,11 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             'chat_id',
-            nargs='+',
             type=str,
             help='Telegram chat id'
         )
         parser.add_argument(
             'qr',
-            nargs='+',
             type=str,
             help='Recognized QR code'
         )
