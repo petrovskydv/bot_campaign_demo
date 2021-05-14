@@ -24,9 +24,9 @@ $ pip install -r requirements.txt
 
 `DYNAM_LICENSE_KEY` - Уникальный ключ для доступа к сервису распознавания qr-кодов. Можно получить после регистрации на сайте [dynamsoft.com](https://www.dynamsoft.com).
 
-`RECOGNITION_QUALITY` - Строка регулирующая качество и скорость распознавания qr-кодов. Возможно три варианта значений: `Best Coverage Settings`, `Best Speed Settings`, `Balance Settings`.
+`RECOGNITION_QUALITY` - Строка регулирующая качество и скорость распознавания qr-кодов. Возможно три варианта значений: `Best Coverage Settings`, `Best Speed Settings`, `Balance Settings`. Используется только для прототипа кода с целью отладки, затем будет убрано.
 
-`BARCODE_FORMAT` - Определяет тип распознаваемых кодов на чеках. Варианты заполнения могут быть следующие: `All`, `OneD`, `QR Code`, `Code 39`, `Code 128`, `Code 93`, `Codabar`, `Interleaved 2 of 5`, `Industrial 2 of 5`, `EAN-13`, `EAN-8`, `UPC-A`, `UPC-E`, `PDF417`, `DATAMATRIX`, `AZTEC`, `Code 39 Extended`, `Maxicode`, `GS1 Databar`, `PatchCode`, `GS1 Composite`, `Postal  Code`, `DotCode`.
+`BARCODE_FORMAT` - Определяет тип распознаваемых кодов на чеках. Варианты заполнения могут быть следующие: `All`, `OneD`, `QR Code`, `Code 39`, `Code 128`, `Code 93`, `Codabar`, `Interleaved 2 of 5`, `Industrial 2 of 5`, `EAN-13`, `EAN-8`, `UPC-A`, `UPC-E`, `PDF417`, `DATAMATRIX`, `AZTEC`, `Code 39 Extended`, `Maxicode`, `GS1 Databar`, `PatchCode`, `GS1 Composite`, `Postal  Code`, `DotCode`. Используется только для прототипа кода с целью отладки, затем будет убрано.
 
 
 ## Установка базы данных
@@ -85,7 +85,7 @@ $ python manage.py swap_with_fns --qr "t=20200727T1117&s=4850.00&fn=928744030063
 
 # Запуск распознавания qr-кодов на изображениях чеков
 
-В качестве сервиса для распознавания qr-кодов [dynamsoft.com](https://www.dynamsoft.com). Что бы сервис успешно заработал, кроме регистрации и получения лицензионного ключа, необходимы два json файла с настройками: `qrcode_settings.json`, `barcode_format.json`. Нужные файлы находятся в папке `qr_codes_recognition` проекта. Их необходимо положить в каталог определенный `STATIC_ROOT` в настройках проекта.
+В качестве сервиса для распознавания qr-кодов [dynamsoft.com](https://www.dynamsoft.com). Что бы сервис успешно заработал, кроме регистрации и получения лицензионного ключа, необходимы два json файла с настройками: `qrcode_settings.json`, `barcode_format.json`. Нужные файлы находятся в папке `qr_codes_recognition` проекта. Их необходимо положить в каталог `qr_codes_recognition` проекта.
 Запуск распознавания, необработанных чеков осуществляется менеджмент командой:
 
 ```bash
@@ -99,6 +99,10 @@ $ python manage.py read_barcodes --img "/Users/.../media/receipts/20210430_12350
 ```
 
 В результате в консоли будет выведена информация зашифрованная в qr-коде на чеке или пустая строка при неудачном распознавании.
+Пример распознанной строки:
+```
+t=20200727T1117&s=4850.00&fn=9287440300634471&i=13571&fp=3730902192&n=1
+```
 
 
 # Работа с прототипом очереди для общения с ФНС
