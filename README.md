@@ -111,6 +111,10 @@ docker run --name jango-rq-queue -d -p 6379:6379 --restart always redis
 ```
 docker ps
 ```
+Запустить воркер:
+```
+python manage.py rqworker
+```
 Тест работы с очередью (на указанный `telegram_chat_id` прилетит ответ от налоговой):
 ```
 python manage.py qr_to_queue <telegram_chat_id> <qr>
