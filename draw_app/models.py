@@ -31,6 +31,9 @@ class Receipt(models.Model):
     uploaded_at = models.DateTimeField('Загружен', auto_now_add=True, db_index=True)
     image = models.ImageField('Фото чека', upload_to='receipts')
     customer = models.ForeignKey(Customer, verbose_name='Участник', on_delete=models.PROTECT, related_name='receipts')
+    qr_recognized = models.CharField(
+        'Распознанный qr', max_length=128, blank=True, db_index=True
+    )
 
     class Meta:
         ordering = ['-uploaded_at']
@@ -62,8 +65,8 @@ class FnsOrder(models.Model):
     last_request_at = models.DateTimeField(
         'Время последнего запроса', auto_now=True, db_index=True
     )
-    qr_recognized = models.CharField(
-        'Распознанный qr', max_length=128, db_index=True
+    сheck_ticket_info = models.CharField(
+        'Распознанный qr', max_length=128, blank=True, db_index=True
     )
     status = models.CharField(
         verbose_name='Статус', choices=TYPES_OF_STATUS,
