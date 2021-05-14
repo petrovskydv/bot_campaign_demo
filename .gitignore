@@ -1,5 +1,6 @@
 env
 venv
+.python-version
 .venv
 .virtualenv
 .idea
