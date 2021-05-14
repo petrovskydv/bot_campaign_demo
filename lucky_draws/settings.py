@@ -149,11 +149,12 @@ DYNAM_LICENSE_KEY = env.str('DYNAM_LICENSE_KEY', '')
 RECOGNITION_QUALITY = env.str('RECOGNITION_QUALITY', 'Balance Settings')
 BARCODE_FORMAT = env.str('BARCODE_FORMAT', 'All')
 
-NODE_API_ENDPOINT = 'http://46.101.245.26:11880/api/'
+NODE_API_ENDPOINT = env.str('NODE_API_ENDPOINT', 'http://46.101.245.26:11880/api/')
 
 RQ_QUEUES = {
     'default': {
-        'HOST': 'localhost',
-        'PORT': 6379,
+        'HOST': env.str('REDIS_HOST', 'localhost'),
+        'PORT': env.int('REDIS_PORT', 6379),
+        'PASSWORD': env.str('REDIS_PASSWORD', ''),
     },
 }
