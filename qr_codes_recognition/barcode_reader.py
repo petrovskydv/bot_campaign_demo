@@ -7,7 +7,7 @@ from dbr import (
     BarcodeReaderError
 )
 
-from dotenv import load_dotenv
+from environs import Env
 
 GROUPS_OF_SETTING = {
     'Best Coverage Settings': '1',
@@ -84,9 +84,10 @@ def decode_file_stream(reader, image):
 
 
 def main():
-    load_dotenv()
+    env = Env()
+    env.read_env()
 
-    license_key = os.getenv("DYNAM_LICENSE_KEY")
+    license_key = env.str('DYNAM_LICENSE_KEY', '')
 
     reader = BarcodeReader()
     reader.init_license(license_key)

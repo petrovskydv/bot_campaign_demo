@@ -1,10 +1,9 @@
-import os
 import sys
 import json
 import click
 import requests
 
-from dotenv import load_dotenv
+from environs import Env
 from contextlib import contextmanager
 
 from .irkkt_lib import (
@@ -42,11 +41,12 @@ def fetch_bill_check_info(qr_code, inn, client_secret, password):
 @click.option('-fp', prompt='параметр fiscalsign')
 @click.option('-qr', required=False, help='qr код')
 def main(t, s, fn, i, fp, qr):
-    load_dotenv()
+    env = Env()
+    env.read_env()
 
-    inn = os.getenv('INN')
-    client_secret = os.getenv('CLIENT_SECRET')
-    password = os.getenv('PASSWORD')
+    inn = env.str('INN', '')
+    client_secret = env.str('CLIENT_SECRET', '')
+    password = env.str('PASSWORD', '')
     with handle_errors(inn, client_secret, password):
         qr_code = qr if qr else f't={t}&s={s}&fn={fn}&i={i}&fp={fp}&n=1'
         bill_check_info = fetch_bill_check_info(
