@@ -11,3 +11,4 @@ Pillow==8.2.0
 phonenumbers==8.12.22
 django-phonenumber-field==5.1.0
 dbr==8.2
+django-rq==2.4.1
