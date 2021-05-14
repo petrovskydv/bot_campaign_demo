@@ -27,7 +27,7 @@ def handle_errors(inn, client_secret, password):
         print(error)
 
 
-def fetch_bill_check_info(qr_code, inn, client_secret, password):
+def fetch_bill_check(qr_code, inn, client_secret, password):
     session_id = get_session_id(inn, client_secret, password)
     bill_check_id = get_bill_check_id(session_id, qr_code)
     return get_bill_check_info(bill_check_id, session_id)
@@ -49,10 +49,10 @@ def main(t, s, fn, i, fp, qr):
     password = env.str('PASSWORD', '')
     with handle_errors(inn, client_secret, password):
         qr_code = qr if qr else f't={t}&s={s}&fn={fn}&i={i}&fp={fp}&n=1'
-        bill_check_info = fetch_bill_check_info(
+        bill_check = fetch_bill_check(
             qr_code, inn, client_secret, password
         )
-        print(json.dumps(bill_check_info, indent=4, ensure_ascii=False))
+        print(json.dumps(bill_check, indent=4, ensure_ascii=False))
 
 
 if __name__ == '__main__':
