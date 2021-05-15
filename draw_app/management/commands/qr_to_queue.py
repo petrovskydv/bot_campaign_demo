@@ -5,7 +5,7 @@ import requests
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from fns_open_api.bill_check import fetch_bill_check_info
+from fns_open_api.bill_check import fetch_bill_check
 
 
 FNS_STATUS_OK = 2
@@ -26,7 +26,7 @@ def send_telegram_text_message(chat_id, text):
 
 
 def get_fns_responce_receipt_items(qr_recognized):
-    bill_check_info = fetch_bill_check_info(
+    bill_check_info = fetch_bill_check(
         qr_recognized,
         settings.INN,
         settings.CLIENT_SECRET,
