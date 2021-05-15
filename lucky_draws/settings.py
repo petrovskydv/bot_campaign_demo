@@ -158,5 +158,3 @@ RQ_QUEUES = {
         'PASSWORD': env.str('REDIS_PASSWORD', ''),
     },
 }
-
-print(NODE_API_ENDPOINT)
