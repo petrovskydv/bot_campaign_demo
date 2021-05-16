@@ -11,3 +11,13 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD-Sunrise23}
       POSTGRES_USER: ${POSTGRES_USER-lucky_draws}
       POSTGRES_DB: ${POSTGRES_USER-lucky_draws}
+  node-red:
+      image: nodered/node-red
+      volumes:
+        - "./node-red:/data" # node-red - каталог который выделит docker для хранения данных, /data - каталог внутри контейнера.
+        ports:
+          - "1880:1880" # 11880 - порт для подключения к контейнеру, 1880 - порт на котором работает node-red внутри контейнера.  
+        environment:
+          TZ=Europe/Moscow
+          TG_TOKEN: ${TG_TOKEN}
+          TG_BOT_NAME: ${TG_BOT_NAME}
