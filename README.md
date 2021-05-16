@@ -109,7 +109,7 @@ t=20200727T1117&s=4850.00&fn=9287440300634471&i=13571&fp=3730902192&n=1
 
 Запустить сервис Redis:
 ```
-docker run --name jango-rq-queue -d -p 6379:6379 --restart always redis
+docker run --name django-rq-queue -d -p 6379:6379 --restart always redis
 ```
 Проверить, что контейнер запустился:
 ```
