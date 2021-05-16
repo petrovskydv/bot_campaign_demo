@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'draw_app',
     'phonenumber_field',
-    "django_rq",
+    'django_rq',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
