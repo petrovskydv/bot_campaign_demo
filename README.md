@@ -28,6 +28,10 @@ $ pip install -r requirements.txt
 
 `BARCODE_FORMAT` - Определяет тип распознаваемых кодов на чеках. Варианты заполнения могут быть следующие: `All`, `OneD`, `QR Code`, `Code 39`, `Code 128`, `Code 93`, `Codabar`, `Interleaved 2 of 5`, `Industrial 2 of 5`, `EAN-13`, `EAN-8`, `UPC-A`, `UPC-E`, `PDF417`, `DATAMATRIX`, `AZTEC`, `Code 39 Extended`, `Maxicode`, `GS1 Databar`, `PatchCode`, `GS1 Composite`, `Postal  Code`, `DotCode`. Используется только для прототипа кода с целью отладки, затем будет убрано.
 
+`TG_TOKEN` - Токен телеграмм бота привязанного к Node-RED.
+
+`TG_BOT_NAME` - Имя телеграмм бота привязанного к Node-RED.
+
 
 ## Установка базы данных
 
@@ -140,3 +144,25 @@ Django RQ CLI Dashboard
 | default        |         0 |         0 |         0 |         0 |         1 |
 ------------------------------------------------------------------------------
 ```
+
+# Запуск прототипа распознавания чеков из телеграмм бота.
+
+![](.assets/node-red-flow.png)
+
+Открыть в браузере [Node-RED](http://127.0.0.1:1880/).
+
+Поставить модули (Главное меню -> Управление палитрой -> Установить):
+  - `node-red-contrib-chatbot`
+  - `node-red-contrib-image-tools`
+  - `node-red-contrib-telegrambot`
+  - `node-red-node-base64`
+
+Развернуть файл проекта в меню Node-RED - Импорт. Указываем файл `flows.json` из каталога `node-red-api` проекта.
+
+Установить в свойствах ноды Telegram Receiver и Telegram Sender конфигурацию заранее зарегистрированного бота для работы с Node-RED. Эти параметры указаны в файле виртуального окружения.
+
+Для запуска конфигурации Node-RED нажимаем Развернуть. 
+
+В переменную окружения `ALLOWED_HOSTS` добавьте `host.docker.internal`, что бы Node-RED мог взаимодействовать с локальным веб-сервером Django.
+
+Бот готов для распознавания чеков ККМ. Введите `/start`

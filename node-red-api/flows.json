@@ -1,0 +1,425 @@
+[
+    {
+        "id": "49c13cac.b32954",
+        "type": "tab",
+        "label": "Поток 3",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "14018272.9e729e",
+        "type": "group",
+        "z": "49c13cac.b32954",
+        "style": {
+            "stroke": "#999999",
+            "stroke-opacity": "1",
+            "fill": "none",
+            "fill-opacity": "1",
+            "label": true,
+            "label-position": "nw",
+            "color": "#a4a4a4"
+        },
+        "nodes": [
+            "cf3c58ac.c04ab8",
+            "a8421bdc.f86c68",
+            "3f81c018.96e4"
+        ],
+        "x": 534,
+        "y": 99,
+        "w": 492,
+        "h": 82
+    },
+    {
+        "id": "60ad4590.476f7c",
+        "type": "group",
+        "z": "49c13cac.b32954",
+        "style": {
+            "stroke": "#999999",
+            "stroke-opacity": "1",
+            "fill": "none",
+            "fill-opacity": "1",
+            "label": true,
+            "label-position": "nw",
+            "color": "#a4a4a4"
+        },
+        "nodes": [
+            "d91635a5.6c80c8",
+            "df8ec7.73e8e138",
+            "f8fc44de.a2b518",
+            "6ea36f4f.acef3"
+        ],
+        "x": 74,
+        "y": 299,
+        "w": 472,
+        "h": 202
+    },
+    {
+        "id": "7a6506fe.b94048",
+        "type": "group",
+        "z": "49c13cac.b32954",
+        "style": {
+            "stroke": "#999999",
+            "stroke-opacity": "1",
+            "fill": "none",
+            "fill-opacity": "1",
+            "label": true,
+            "label-position": "nw",
+            "color": "#a4a4a4"
+        },
+        "nodes": [
+            "cea6c79.8b3ac38",
+            "804b1151.b40a7",
+            "3fc035b.c9837ca",
+            "6d2f3eb7.0d879",
+            "153d1e9e.72f651"
+        ],
+        "x": 574,
+        "y": 299,
+        "w": 432,
+        "h": 202
+    },
+    {
+        "id": "6d2f3eb7.0d879",
+        "type": "chatbot-parse",
+        "z": "49c13cac.b32954",
+        "g": "7a6506fe.b94048",
+        "name": "parse image",
+        "parseType": "photo",
+        "parseVariable": "string",
+        "x": 730,
+        "y": 460,
+        "wires": [
+            [],
+            []
+        ]
+    },
+    {
+        "id": "9f32eb7d.c3b0b8",
+        "type": "chatbot-telegram-receive",
+        "z": "49c13cac.b32954",
+        "bot": "ceee600a.9673d",
+        "botProduction": "ceee600a.9673d",
+        "x": 110,
+        "y": 180,
+        "wires": [
+            [
+                "1a6234a3.0ddb4b"
+            ]
+        ]
+    },
+    {
+        "id": "1a6234a3.0ddb4b",
+        "type": "chatbot-rules",
+        "z": "49c13cac.b32954",
+        "name": "",
+        "rules": [
+            {
+                "type": "command",
+                "command": "/start"
+            },
+            {
+                "type": "messageType",
+                "messageType": "photo"
+            }
+        ],
+        "outputs": 2,
+        "x": 290,
+        "y": 180,
+        "wires": [
+            [
+                "c763215f.75ea8"
+            ],
+            [
+                "46f521dc.98695"
+            ]
+        ]
+    },
+    {
+        "id": "c763215f.75ea8",
+        "type": "link out",
+        "z": "49c13cac.b32954",
+        "name": "/start",
+        "links": [
+            "a8421bdc.f86c68"
+        ],
+        "x": 450,
+        "y": 140,
+        "wires": [],
+        "l": true
+    },
+    {
+        "id": "cf3c58ac.c04ab8",
+        "type": "chatbot-ask",
+        "z": "49c13cac.b32954",
+        "g": "14018272.9e729e",
+        "name": "",
+        "buttons": [],
+        "message": "📷 Сфотографируйте чек. \n\nНа нем должен быть хорошо виден QR-код.\n\nЛучше всего получится, если:\n- чек хорошо освещен\n- изображение четкое и не смазанное\n\n📎 Отправьте сюда фотографию чека.",
+        "x": 690,
+        "y": 140,
+        "wires": [
+            [
+                "3f81c018.96e4"
+            ]
+        ]
+    },
+    {
+        "id": "a8421bdc.f86c68",
+        "type": "link in",
+        "z": "49c13cac.b32954",
+        "g": "14018272.9e729e",
+        "name": "",
+        "links": [
+            "c763215f.75ea8"
+        ],
+        "x": 575,
+        "y": 140,
+        "wires": [
+            [
+                "cf3c58ac.c04ab8"
+            ]
+        ]
+    },
+    {
+        "id": "cea6c79.8b3ac38",
+        "type": "debug",
+        "z": "49c13cac.b32954",
+        "g": "7a6506fe.b94048",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 890,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "3f81c018.96e4",
+        "type": "chatbot-telegram-send",
+        "z": "49c13cac.b32954",
+        "g": "14018272.9e729e",
+        "bot": "ceee600a.9673d",
+        "botProduction": "",
+        "track": false,
+        "passThrough": false,
+        "errorOutput": false,
+        "outputs": 0,
+        "x": 910,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "46f521dc.98695",
+        "type": "link out",
+        "z": "49c13cac.b32954",
+        "name": "Прислали картинку",
+        "links": [
+            "804b1151.b40a7"
+        ],
+        "x": 500,
+        "y": 220,
+        "wires": [],
+        "l": true
+    },
+    {
+        "id": "804b1151.b40a7",
+        "type": "link in",
+        "z": "49c13cac.b32954",
+        "g": "7a6506fe.b94048",
+        "name": "",
+        "links": [
+            "46f521dc.98695"
+        ],
+        "x": 615,
+        "y": 340,
+        "wires": [
+            [
+                "153d1e9e.72f651"
+            ]
+        ]
+    },
+    {
+        "id": "3fc035b.c9837ca",
+        "type": "http request",
+        "z": "49c13cac.b32954",
+        "g": "7a6506fe.b94048",
+        "name": "",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://host.docker.internal:8000/api/send_image/",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "x": 890,
+        "y": 340,
+        "wires": [
+            [
+                "cea6c79.8b3ac38"
+            ]
+        ]
+    },
+    {
+        "id": "153d1e9e.72f651",
+        "type": "base64",
+        "z": "49c13cac.b32954",
+        "g": "7a6506fe.b94048",
+        "name": "",
+        "action": "",
+        "property": "payload[\"content\"]",
+        "x": 720,
+        "y": 340,
+        "wires": [
+            [
+                "3fc035b.c9837ca"
+            ]
+        ]
+    },
+    {
+        "id": "ce37da06.d77778",
+        "type": "http in",
+        "z": "49c13cac.b32954",
+        "name": "",
+        "url": "/api/send",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 90,
+        "y": 240,
+        "wires": [
+            [
+                "8881c869.dfeef8"
+            ]
+        ]
+    },
+    {
+        "id": "8881c869.dfeef8",
+        "type": "link out",
+        "z": "49c13cac.b32954",
+        "name": "",
+        "links": [
+            "d91635a5.6c80c8"
+        ],
+        "x": 225,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "d91635a5.6c80c8",
+        "type": "link in",
+        "z": "49c13cac.b32954",
+        "g": "60ad4590.476f7c",
+        "name": "",
+        "links": [
+            "8881c869.dfeef8"
+        ],
+        "x": 115,
+        "y": 340,
+        "wires": [
+            [
+                "f8fc44de.a2b518"
+            ]
+        ]
+    },
+    {
+        "id": "df8ec7.73e8e138",
+        "type": "http request",
+        "z": "49c13cac.b32954",
+        "g": "60ad4590.476f7c",
+        "name": "",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "https://api.telegram.org/bot{{tg_token}}/sendMessage?chat_id={{chat_id}}&text={{{text}}}",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "x": 450,
+        "y": 460,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "f8fc44de.a2b518",
+        "type": "change",
+        "z": "49c13cac.b32954",
+        "g": "60ad4590.476f7c",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "text",
+                "pt": "msg",
+                "to": "req.query.text",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "chat_id",
+                "pt": "msg",
+                "to": "req.query.chat_id",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "tg_token",
+                "pt": "msg",
+                "to": "TG_TOKEN",
+                "tot": "env"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 270,
+        "y": 340,
+        "wires": [
+            [
+                "6ea36f4f.acef3"
+            ]
+        ]
+    },
+    {
+        "id": "6ea36f4f.acef3",
+        "type": "function",
+        "z": "49c13cac.b32954",
+        "g": "60ad4590.476f7c",
+        "name": "",
+        "func": "msg.text = encodeURI(msg.text);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 180,
+        "y": 460,
+        "wires": [
+            [
+                "df8ec7.73e8e138"
+            ]
+        ]
+    },
+    {
+        "id": "ceee600a.9673d",
+        "type": "chatbot-telegram-node",
+        "botname": "julia_dev_weather_bot",
+        "usernames": "",
+        "providerToken": "",
+        "polling": "1000",
+        "store": "",
+        "log": "",
+        "debug": true,
+        "webHook": "",
+        "connectMode": "polling"
+    }
+]
