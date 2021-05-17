@@ -23,26 +23,26 @@ class FnsInline(admin.TabularInline):
 class CustomerAdmin(admin.ModelAdmin):
     inlines = [ReceiptInline]
     list_display = [
-        'created_at',
-        'username',
-        'first_name',
-        'telegram_chat_id',
+        'date_joined',
+        'tg_username',
+        'tg_first_name',
+        'tg_chat_id',
         'phone',
     ]
-    list_filter = ['created_at']
-    search_fields = ['username', 'first_name', 'telegram_chat_id', 'phone']
+    list_filter = ['date_joined']
+    search_fields = ['date_joined', 'tg_chat_id', 'phone']
 
 
 @admin.register(FnsOrder)
 class FnsOrderAdmin(admin.ModelAdmin):
     list_display = [
         'receipt',
-        'first_request_at',
-        'last_request_at',
+        'first_requested_at',
+        'last_requested_at',
         'сheck_ticket_info',
         'status',
     ]
-    list_filter = ['first_request_at', 'last_request_at']
+    list_filter = ['first_requested_at', 'last_requested_at']
     readonly_fields = ['answer']
 
 
