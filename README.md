@@ -131,7 +131,8 @@ python manage.py qr_to_queue <telegram_chat_id> <qr>
 ```
 python manage.py qr_to_queue 12345 "t=20200727T1117&s=4850.00&fn=9287440300634471&i=13571&fp=3730902192&n=1"
 ```
-Мониторинг очереди:
+## Мониторинг очереди
+В консоли:
 ```
 python manage.py rqstats --interval=1
 ```
@@ -144,6 +145,12 @@ Django RQ CLI Dashboard
 | default        |         0 |         0 |         0 |         0 |         1 |
 ------------------------------------------------------------------------------
 ```
+RQ dashboard (легкий веб-интерфейс мониторинга на Flask)
+```
+rq-dashboard
+```
+
+![](https://python-rq.org/img/dashboard.png)
 
 # Запуск прототипа распознавания чеков из телеграмм бота.
 

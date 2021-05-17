@@ -1,14 +1,25 @@
 from urllib.parse import urljoin
 
-import django_rq
 import requests
+from django_rq import job
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from rq import Retry
 
 from fns_open_api.bill_check import fetch_bill_check
 
 
 FNS_STATUS_OK = 2
+FNS_STATUS_WRONG_QR = 8
+RETRY_COUNT = 3
+RETRY_INTERVALS = [60, 60*60, 60*60*24]
+
+
+class FnsQRError(Exception):
+    pass
+
+class FnsNoDataYetError(Exception):
+    pass
 
 
 def send_telegram_text_message(chat_id, text):
@@ -32,26 +43,35 @@ def get_fns_responce_receipt_items(qr_recognized):
         settings.CLIENT_SECRET,
         settings.PASSWORD
     )
-    
+
     if bill_check_info.get('status') == FNS_STATUS_OK:
         receipt_items = bill_check_info['ticket']['document']['receipt']['items']
         return receipt_items
+
+    if bill_check_info.get('status') == FNS_STATUS_WRONG_QR:
+        raise FnsQRError
+
+    #TODO: Добавить проверки остальных возможных статусов
+
+    # Если qr-код валидный, но данных еще нет, то
+    # скрипт упадет и RQ поставит его в конец очереди:
+    raise FnsNoDataYetError
 
 
 def format_receipt_items_names(receipt_items):
     return ', '.join(item['name'] for item in receipt_items)
 
 
+@job('default', retry=Retry(max=RETRY_COUNT, interval=RETRY_INTERVALS))
 def handle_fns_request(chat_id, qr_recognized):
-    receipt_items = get_fns_responce_receipt_items(qr_recognized)
-
-    if receipt_items:
+    try:
+        receipt_items = get_fns_responce_receipt_items(qr_recognized)
         items_names = format_receipt_items_names(receipt_items)
         message = f'Список ваших покупок: {items_names}'
-        send_telegram_text_message(chat_id, message)
-        return
+    except FnsQRError:
+        message = 'Ваш QR-код мы распознали, но похоже, что он не от чека с покупками.'
 
-    send_telegram_text_message(chat_id, 'Ваш чек не очень)')
+    send_telegram_text_message(chat_id, message)
 
 
 class Command(BaseCommand):
@@ -70,4 +90,4 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         chat_id = options['chat_id']
         qr_recognized = options['qr']
-        django_rq.enqueue(handle_fns_request, chat_id, qr_recognized)
+        handle_fns_request.delay(chat_id, qr_recognized)
