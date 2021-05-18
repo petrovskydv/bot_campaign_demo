@@ -151,6 +151,7 @@ RECOGNITION_QUALITY = env.str('RECOGNITION_QUALITY', 'Balance Settings')
 BARCODE_FORMAT = env.str('BARCODE_FORMAT', 'All')
 
 NODE_API_ENDPOINT = env.str('NODE_API_ENDPOINT', 'http://127.0.0.1:1880/api/')
+TG_TOKEN = env.str('TG_TOKEN', '')
 
 RQ_QUEUES = {
     'default': {

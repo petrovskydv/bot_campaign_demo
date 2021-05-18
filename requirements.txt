@@ -13,3 +13,4 @@ dbr==8.2
 django-rq==2.4.1
 djangorestframework==3.12.4
 rq-dashboard==0.6.1
+more-itertools==8.7.0 # пока что временно 

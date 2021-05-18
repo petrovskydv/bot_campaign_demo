@@ -9,6 +9,8 @@ from dbr import (
 
 from environs import Env
 
+from draw_app.custom_exceptions import QrCodeNoDataError
+
 GROUPS_OF_SETTING = {
     'Best Coverage Settings': '1',
     'Best Speed Settings': '2',
@@ -57,32 +59,30 @@ def set_barcode_format(reader, barcode_format):
 
 def decode_file(reader, image_file):
     qr_codes = set()
-    try:
 
-        text_results = reader.decode_file(image_file)
-        if text_results:
-            for text_result in text_results:
-                qr_codes.add(text_result.barcode_text)
+    text_results = reader.decode_file(image_file)
+    if text_results:
+        for text_result in text_results:
+            qr_codes.add(text_result.barcode_text)
 
+    if qr_codes:
         return qr_codes
 
-    except BarcodeReaderError as error:
-        print(error)
+    raise QrCodeNoDataError()
 
 
 def decode_file_stream(reader, image):
     qr_codes = set()
-    try:
 
-        text_results = reader.decode_file_stream(bytearray(image))
-        if text_results:
-            for text_result in text_results:
-                qr_codes.add(text_result.barcode_text)
+    text_results = reader.decode_file_stream(bytearray(image))
+    if text_results:
+        for text_result in text_results:
+            qr_codes.add(text_result.barcode_text)
 
+    if qr_codes:
         return qr_codes
 
-    except BarcodeReaderError as error:
-        print(error)
+    raise QrCodeNoDataError()
 
 
 def main():
@@ -95,19 +95,24 @@ def main():
 
     license_key = env.str('DYNAM_LICENSE_KEY', '')
 
-    reader = BarcodeReader()
-    reader.init_license(license_key)
+    try:
 
-    init_runtime_settings(reader, 'Super Best Coverage Settings')
-    set_barcode_format(reader, 'QR Code')
+        reader = BarcodeReader()
+        reader.init_license(license_key)
 
-    images = []
-    for file_type in ['jpg', 'jpeg', 'png']:
-        images.extend(glob.glob(f'images/*.{file_type}'))
+        init_runtime_settings(reader, 'Super Best Coverage Settings')
+        set_barcode_format(reader, 'QR Code')
 
-    for image in images:
-        qr_codes = decode_file(reader, image)
-        print(f'{image}: {qr_codes}')
+        images = []
+        for file_type in ['jpg', 'jpeg', 'png']:
+            images.extend(glob.glob(f'images/*.{file_type}'))
+
+        for image in images:
+            qr_codes = decode_file(reader, image)
+            print(f'{image}: {qr_codes}')
+
+    except BarcodeReaderError as error:
+        print(error)
 
 
 if __name__ == '__main__':
