@@ -1,23 +1,34 @@
 version: '3'
 services:
   postgres:
-    image:
-      "postgres:12.0-alpine"
+    image: "postgres:12.0-alpine"
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data
+      - ./volumes/postgres:/var/lib/postgresql/data
     ports:
       - "127.0.0.1:5432:5432"
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD-Sunrise23}
       POSTGRES_USER: ${POSTGRES_USER-lucky_draws}
       POSTGRES_DB: ${POSTGRES_USER-lucky_draws}
+    restart: always
+
   node-red:
     image: nodered/node-red
     volumes:
-      - "./node-red:/data" # node-red - каталог который выделит docker для хранения данных, /data - каталог внутри контейнера.
+      - "./volumes/node_red:/data"
     ports:
-      - "1880:1880" # 1880 - порт для подключения к контейнеру, 1880 - порт на котором работает node-red внутри контейнера.  
+      - "1880:1880"
     environment:
       TZ: Europe/Moscow
       TG_TOKEN: ${TG_TOKEN}
       TG_BOT_NAME: ${TG_BOT_NAME}
+      HOST: ${DOCKERHOST}
+    restart: always
+
+  django-rq:
+    image: redis
+    volumes:
+      - ./volumes/redis:/data
+    ports:
+      - "6379:6379"
+    restart: always
