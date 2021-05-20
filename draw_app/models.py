@@ -13,6 +13,12 @@ TYPES_OF_STATUS = (
 )
 
 
+TYPES_OF_REQUESTS = (
+    ('dynamsoft', 'чтение qr-кодов'),
+    ('fns_api', 'получение данных из ФНС'),
+)
+
+
 class User(AbstractUser):
     qr_setting = ArrayField(
         models.JSONField(
@@ -154,3 +160,42 @@ class FnsOrder(models.Model):
 
     def __str__(self):
         return f'{self.first_requested_at}'
+
+
+class QRCodeRecognitionAttempt(models.Model):
+    request_to = models.CharField(
+        'Наименование сервиса для анализа чека',
+        choices=TYPES_OF_REQUESTS,
+        max_length=25,
+        db_index=True,
+    )
+    start_time = models.DateTimeField(
+        'Время отправки чека для анализа',
+        auto_now_add=True,
+        db_index=True
+    )
+    end_time = models.DateTimeField(
+        'Время получения ответа',
+        auto_now_add=True,
+        db_index=True
+    )
+    reason_for_failure = models.CharField(
+        'Причина неудачи анализа чека',
+        max_length=255,
+        blank=True,
+        default='',
+        db_index=True
+    )
+    receipt = models.ForeignKey(
+        Receipt,
+        verbose_name='Чек',
+        on_delete=models.CASCADE,
+        related_name='attempts'
+    )
+
+    class Meta:
+        ordering = ['-start_time']
+        verbose_name = 'Статистика распознования чеков'
+
+    def __str__(self):
+        return f'{self.request_to} {self.start_time}'

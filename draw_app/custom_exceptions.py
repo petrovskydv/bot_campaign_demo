@@ -7,6 +7,10 @@ class QrCodeNoDataError(Exception):
     pass
 
 
+class QrCodeNotValidError(Exception):
+    pass
+
+
 class FnsQRError(Exception):
     pass
 

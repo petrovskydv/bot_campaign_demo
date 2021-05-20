@@ -5,13 +5,15 @@ import time
 from django.db import transaction
 from django.utils.timezone import now
 from django.core.files.base import ContentFile
-from more_itertools import first
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
 from draw_app.notify_rollbar import notify_rollbar
 from .tasks import handle_image, handle_barcode
-from .custom_exceptions import ServiceNotRespond
+from .custom_exceptions import (
+    ServiceNotRespond,
+    QrCodeNotValidError
+)
 
 from .models import (
     Customer, Receipt, FnsOrder
@@ -34,7 +36,8 @@ def get_receipt_and_raw_order(chat_id, image):
 
 
 @transaction.atomic
-def update_qr_recognized(receipt, order, barcode_item):
+def update_qr_recognized(barcode_item, *args):
+    receipt, order = args
     if barcode_item:
         receipt.qr_recognized = barcode_item
         receipt.save()
@@ -45,7 +48,8 @@ def update_qr_recognized(receipt, order, barcode_item):
 
 
 @transaction.atomic
-def update_fns_answer(order, fns_answer):
+def update_fns_answer(fns_answer, *args):
+    _, order = args
     if fns_answer:
         order.answer = fns_answer
         order.status = 'received'
@@ -63,17 +67,16 @@ def handle_receipt_image(request):
         with notify_rollbar():
             chat_id = request.data['chatId']
             image = base64.b64decode(request.data['content'])
-            receipt, order = get_receipt_and_raw_order(chat_id, image)
-            if receipt and order:
+            receipt_and_order = get_receipt_and_raw_order(chat_id, image)
+            if receipt_and_order:
                 queue = django_rq.get_queue('default')
-                barcode = queue.enqueue(handle_image, chat_id, image)
+                barcode = queue.enqueue(handle_image, chat_id, image, *receipt_and_order)
                 waiting_task_finish(barcode)
-                barcode_item = first(barcode.result, None)
-                update_qr_recognized(receipt, order, barcode_item)
-                fns_answer = queue.enqueue(handle_barcode, chat_id, barcode_item)
+                update_qr_recognized(barcode.result, *receipt_and_order)
+                fns_answer = queue.enqueue(handle_barcode, chat_id, barcode.result, *receipt_and_order)
                 waiting_task_finish(fns_answer)
-                update_fns_answer(order, fns_answer.result)
-    except ServiceNotRespond as error:
+                update_fns_answer(fns_answer.result, *receipt_and_order)
+    except (ServiceNotRespond, QrCodeNotValidError) as error:
         return Response(f'fail: {error}')
 
     return Response('ok')
