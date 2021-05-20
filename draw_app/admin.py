@@ -1,10 +1,14 @@
 from django.contrib import admin
+from django.utils.safestring import mark_safe
+
 
 from .models import (
+    User,
     Customer,
     FnsOrder,
     Receipt
 )
+
 
 class ReceiptInline(admin.TabularInline):
     model = Receipt
@@ -51,3 +55,9 @@ class ReceiptAdmin(admin.ModelAdmin):
     inlines = [FnsInline]
     list_display = ['uploaded_at', 'customer']
     list_filter = ['uploaded_at']
+
+
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    pass
+

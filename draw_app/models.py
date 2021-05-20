@@ -1,6 +1,8 @@
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 from django.utils.html import format_html
 from phonenumber_field.modelfields import PhoneNumberField
+from django.contrib.auth.models import AbstractUser
 
 
 TYPES_OF_STATUS = (
@@ -9,6 +11,16 @@ TYPES_OF_STATUS = (
     ('received', 'получен'),
     ('closed', 'закрыт'),
 )
+
+
+class User(AbstractUser):
+    qr_setting = ArrayField(
+        models.JSONField(
+            null=True, blank=True  # для целей отладки позволяем полю быть пустым
+        ),
+        blank=True, null=True,
+        verbose_name='Вариант настройки чтения qr кодов'
+    )
 
 
 class Customer(models.Model):
@@ -113,7 +125,7 @@ class FnsOrder(models.Model):
         auto_now=True,
         db_index=True
     )
-    сheck_ticket_info = models.CharField(
+    check_ticket_info = models.CharField(
         'Распознанный qr',
         max_length=128,
         blank=True,
