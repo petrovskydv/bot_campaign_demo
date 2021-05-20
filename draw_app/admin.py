@@ -39,7 +39,7 @@ class FnsOrderAdmin(admin.ModelAdmin):
         'receipt',
         'first_requested_at',
         'last_requested_at',
-        'сheck_ticket_info',
+        'check_ticket_info',
         'status',
     ]
     list_filter = ['first_requested_at', 'last_requested_at']

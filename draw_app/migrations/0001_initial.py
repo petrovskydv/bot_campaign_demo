@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('first_requested_at', models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='Время первого запроса')),
                 ('last_requested_at', models.DateTimeField(auto_now=True, db_index=True, verbose_name='Время последнего запроса')),
-                ('сheck_ticket_info', models.CharField(blank=True, db_index=True, default='', max_length=128, verbose_name='Распознанный qr')),
+                ('check_ticket_info', models.CharField(blank=True, db_index=True, default='', max_length=128, verbose_name='Распознанный qr')),
                 ('status', models.CharField(choices=[('raw', 'не обработан'), ('sent', 'отправлен'), ('received', 'получен'), ('closed', 'закрыт')], db_index=True, default='raw', max_length=25, verbose_name='Статус')),
                 ('answer', models.JSONField(db_index=True, default=dict, verbose_name='Ответ налоговой')),
                 ('receipt', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='fns_orders', to='draw_app.receipt', verbose_name='Чек')),
