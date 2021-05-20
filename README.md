@@ -24,8 +24,6 @@ $ pip install -r requirements.txt
 
 `DYNAM_LICENSE_KEY` - Уникальный ключ для доступа к сервису распознавания qr-кодов. Можно получить после регистрации на сайте [dynamsoft.com](https://www.dynamsoft.com).
 
-`RECOGNITION_QUALITY` - Строка регулирующая качество и скорость распознавания qr-кодов. Возможно три варианта значений: `Best Coverage Settings`, `Best Speed Settings`, `Balance Settings`. Используется только для прототипа кода с целью отладки, затем будет убрано.
-
 `BARCODE_FORMAT` - Определяет тип распознаваемых кодов на чеках. Варианты заполнения могут быть следующие: `All`, `OneD`, `QR Code`, `Code 39`, `Code 128`, `Code 93`, `Codabar`, `Interleaved 2 of 5`, `Industrial 2 of 5`, `EAN-13`, `EAN-8`, `UPC-A`, `UPC-E`, `PDF417`, `DATAMATRIX`, `AZTEC`, `Code 39 Extended`, `Maxicode`, `GS1 Databar`, `PatchCode`, `GS1 Composite`, `Postal  Code`, `DotCode`. Используется только для прототипа кода с целью отладки, затем будет убрано.
 
 `TG_TOKEN` - Токен телеграмм бота привязанного к Node-RED.

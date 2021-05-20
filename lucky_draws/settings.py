@@ -149,7 +149,6 @@ INN = env.int('INN', 0)
 PASSWORD = env.str('PASSWORD', '')
 CLIENT_SECRET = env.str('CLIENT_SECRET', '')
 DYNAM_LICENSE_KEY = env.str('DYNAM_LICENSE_KEY', '')
-RECOGNITION_QUALITY = env.str('RECOGNITION_QUALITY', 'Balance Settings')
 BARCODE_FORMAT = env.str('BARCODE_FORMAT', 'All')
 
 NODE_API_ENDPOINT = env.str('NODE_API_ENDPOINT', 'http://127.0.0.1:1880/api/')

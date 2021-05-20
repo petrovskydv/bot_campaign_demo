@@ -1,8 +1,15 @@
 from django.db import models
-from django.contrib.postgres.fields import ArrayField
 from django.utils.html import format_html
 from phonenumber_field.modelfields import PhoneNumberField
 from django.contrib.auth.models import AbstractUser
+
+
+GROUPS_OF_SETTING = (
+    ('Best Coverage Settings', 'Высокое качество распознования'),
+    ('Best Speed Settings', 'Высокая скорость распознования'),
+    ('Balance Settings', 'Сбалансированные настройки'),
+    ('Ultimate Coverage Settings', 'Максимальное качество распознования')
+)
 
 
 TYPES_OF_STATUS = (
@@ -20,12 +27,12 @@ TYPES_OF_REQUESTS = (
 
 
 class User(AbstractUser):
-    qr_setting = ArrayField(
-        models.JSONField(
-            null=True, blank=True  # для целей отладки позволяем полю быть пустым
-        ),
-        blank=True, null=True,
-        verbose_name='Вариант настройки чтения qr кодов'
+    qr_setting = models.CharField(
+        verbose_name='Варианты настроек распознования баркодов',
+        choices=GROUPS_OF_SETTING,
+        default='Ultimate Coverage Settings',
+        max_length=30,
+        db_index=True
     )
 
 

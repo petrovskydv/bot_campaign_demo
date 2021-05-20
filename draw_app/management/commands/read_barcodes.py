@@ -15,6 +15,8 @@ from qr_codes_recognition.barcode_reader import (
     decode_file_stream
 )
 
+from draw_app.models import User
+
 
 class Command(BaseCommand):
 
@@ -62,7 +64,11 @@ def read_barcode(options, image):
     reader = BarcodeReader()
     reader.init_license(settings.DYNAM_LICENSE_KEY)
 
-    init_runtime_settings(reader, settings.RECOGNITION_QUALITY)
+    recognition_quality_setting = User.objects.filter(
+        is_superuser=True
+    ).first().qr_setting
+
+    init_runtime_settings(reader, recognition_quality_setting)
     set_barcode_format(reader, settings.BARCODE_FORMAT)
 
     return decode_file_stream(reader, image)

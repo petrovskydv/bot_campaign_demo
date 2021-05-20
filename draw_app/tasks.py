@@ -27,7 +27,9 @@ from draw_app.custom_exceptions import (
     FnsQRError, FnsNoDataYetError, QrCodeNotValidError
 )
 
-from .models import QRCodeRecognitionAttempt
+from .models import (
+    User, QRCodeRecognitionAttempt
+)
 
 
 def handle_recognition_attempt(request_to):
@@ -55,10 +57,10 @@ def handle_recognition_attempt(request_to):
                 error_message = 'Сервис в данный момент не доступен.'
                 raise ServiceNotRespond()
             finally:
-                recognition_attempt.reason_for_failure = error_message
-                recognition_attempt.save()
                 if error_message:
+                    recognition_attempt.reason_for_failure = error_message
                     send_message_to_tg(chat_id, error_message)
+                recognition_attempt.save()
             return result
         return run_func
     return wrap
@@ -76,10 +78,14 @@ def get_valid_barcode(barcodes):
 @handle_recognition_attempt('dynamsoft')
 def handle_image(chat_id, image, *args):
 
+    recognition_quality_setting = User.objects.filter(
+        is_superuser=True
+    ).first().qr_setting
+
     reader = BarcodeReader()
     reader.init_license(settings.DYNAM_LICENSE_KEY)
 
-    init_runtime_settings(reader, settings.RECOGNITION_QUALITY)
+    init_runtime_settings(reader, recognition_quality_setting)
     set_barcode_format(reader, settings.BARCODE_FORMAT)
 
     barcodes = decode_file_stream(reader, image)

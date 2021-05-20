@@ -15,7 +15,7 @@ GROUPS_OF_SETTING = {
     'Best Coverage Settings': '1',
     'Best Speed Settings': '2',
     'Balance Settings': '3',
-    'Super Best Coverage Settings': '4'
+    'Ultimate Coverage Settings': '4'
 }
 
 BARCODE_FORMAT = {
@@ -100,7 +100,7 @@ def main():
         reader = BarcodeReader()
         reader.init_license(license_key)
 
-        init_runtime_settings(reader, 'Super Best Coverage Settings')
+        init_runtime_settings(reader, 'Ultimate Coverage Settings')
         set_barcode_format(reader, 'QR Code')
 
         images = []
