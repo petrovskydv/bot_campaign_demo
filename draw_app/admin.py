@@ -67,15 +67,15 @@ class UserAdmin(admin.ModelAdmin):
 class QRCodeRecognitionAttemptAdmin(admin.ModelAdmin):
     readonly_fields = ['preview_field']
     list_display = [
-        'receipt',
-        'request_to',
-        'start_time',
-        'end_time',
-        'recognition_time_field',
-        'reason_for_failure',
-        'preview_field',
+        'receipt', 'request_to', 'start_time',
+        'end_time', 'recognition_time_field',
+        'reason_for_failure', 'preview_field',
+        'recognition_quality_setting',
     ]
-    list_filter = ['request_to', 'start_time', 'end_time', 'reason_for_failure']
+    list_filter = [
+        'request_to', 'start_time', 'end_time',
+        'reason_for_failure', 'recognition_quality_setting'
+    ]
 
     def preview_field(self, instance):
         return mark_safe(f'<img src="{instance.receipt.image.url}" height=100px>')

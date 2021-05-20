@@ -190,7 +190,12 @@ class QRCodeRecognitionAttempt(models.Model):
         'Причина неудачи анализа чека',
         max_length=255,
         blank=True,
-        default='',
+        db_index=True
+    )
+    recognition_quality_setting = models.CharField(
+        'Настройка качества распознования qr-кодов',
+        blank=True,
+        max_length=30,
         db_index=True
     )
     receipt = models.ForeignKey(

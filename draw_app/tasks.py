@@ -39,10 +39,13 @@ def handle_recognition_attempt(request_to):
             try:
                 error_message = ''
                 receipt, _ = args
+                recognition_quality_setting = User.objects.filter(
+                    is_superuser=True
+                ).first().qr_setting
                 recognition_attempt = QRCodeRecognitionAttempt.objects.create(
                     receipt=receipt, request_to=request_to, start_time=now()
                 )
-                result = func(chat_id, object)
+                result = func(chat_id, object, recognition_quality_setting)
                 recognition_attempt.end_time = now()
             except (BarcodeReaderError, QrCodeNoDataError):
                 error_message = r'''
@@ -60,6 +63,7 @@ def handle_recognition_attempt(request_to):
                 if error_message:
                     recognition_attempt.reason_for_failure = error_message
                     send_message_to_tg(chat_id, error_message)
+                recognition_attempt.recognition_quality_setting = recognition_quality_setting
                 recognition_attempt.save()
             return result
         return run_func
@@ -78,14 +82,10 @@ def get_valid_barcode(barcodes):
 @handle_recognition_attempt('dynamsoft')
 def handle_image(chat_id, image, *args):
 
-    recognition_quality_setting = User.objects.filter(
-        is_superuser=True
-    ).first().qr_setting
-
     reader = BarcodeReader()
     reader.init_license(settings.DYNAM_LICENSE_KEY)
 
-    init_runtime_settings(reader, recognition_quality_setting)
+    init_runtime_settings(reader, *args)
     set_barcode_format(reader, settings.BARCODE_FORMAT)
 
     barcodes = decode_file_stream(reader, image)
