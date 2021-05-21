@@ -24,10 +24,9 @@ from .models import (
 def get_receipt_and_raw_order(chat_id, image):
     customer, create = Customer.objects.get_or_create(tg_chat_id=chat_id)
     if create:
-        customer.date_joined = now()
         customer.save()
 
-    receipt = Receipt.objects.create(uploaded_at=now(), customer=customer)
+    receipt = Receipt.objects.create(customer=customer)
     receipt.image.save(
         f'{now().strftime("%Y%m%d%H%M%s")}.png', ContentFile(image)
     )
@@ -41,7 +40,6 @@ def update_qr_recognized(barcode_item, *args):
     if barcode_item:
         receipt.qr_recognized = barcode_item
         receipt.save()
-        order.first_requested_at = now()
         order.сheck_ticket_info = barcode_item
         order.status = 'sent'
         order.save()
