@@ -21,7 +21,7 @@ from fns_open_api.bill_check import (
     get_fns_responce_receipt_items,
     format_receipt_items,
 )
-from node_red_api.node_red_lib import send_message_to_tg
+from node_red_api.node_red_lib import send_message_to_nr
 from draw_app.custom_exceptions import (
     ServiceNotRespond, QrCodeNoDataError,
     FnsQRError, FnsNoDataYetError, QrCodeNotValidError
@@ -62,7 +62,7 @@ def handle_recognition_attempt(request_to):
             finally:
                 if error_message:
                     recognition_attempt.reason_for_failure = error_message
-                    send_message_to_tg(chat_id, error_message)
+                    send_message_to_nr(chat_id, error_message)
                 recognition_attempt.recognition_quality_setting = recognition_quality_setting
                 recognition_attempt.save()
             return result
@@ -106,7 +106,7 @@ def handle_barcode(chat_id, qrcode, *args):
     items_names = format_receipt_items(receipt_items, to_dict=True)
 
     if items_names:
-        send_message_to_tg(
+        send_message_to_nr(
             chat_id, f'Список ваших покупок: {items_names}'
         )
         return items_names
