@@ -1,5 +1,5 @@
 from django.db import models
-from django.utils.html import format_html
+from django.utils.html import mark_safe
 from phonenumber_field.modelfields import PhoneNumberField
 from django.contrib.auth.models import AbstractUser
 
@@ -110,7 +110,7 @@ class Receipt(models.Model):
         return f'{self.uploaded_at}'
 
     def get_preview(self):
-        return format_html(f'<img src="{self.image.url}" width="300">')
+        return mark_safe(f'<img src="{self.image.url}" width="300">')
 
 
 class FnsOrderQuerySet(models.QuerySet):
