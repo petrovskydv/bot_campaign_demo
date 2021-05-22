@@ -7,7 +7,7 @@ from .models import (
     Customer,
     FnsOrder,
     Receipt,
-    QRCodeRecognitionAttempt
+    ReceiptRecognitionOuterRequestStat
 )
 
 
@@ -63,18 +63,18 @@ class UserAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(QRCodeRecognitionAttempt)
-class QRCodeRecognitionAttemptAdmin(admin.ModelAdmin):
+@admin.register(ReceiptRecognitionOuterRequestStat)
+class QReceiptRecognitionOuterRequestStatAdmin(admin.ModelAdmin):
     readonly_fields = ['preview_field']
     list_display = [
         'receipt', 'request_to', 'start_time',
         'end_time', 'recognition_time_field',
         'reason_for_failure', 'preview_field',
-        'recognition_quality_setting',
+        'dynamsoft_quality_setting',
     ]
     list_filter = [
         'request_to', 'start_time', 'end_time',
-        'reason_for_failure', 'recognition_quality_setting'
+        'reason_for_failure', 'dynamsoft_quality_setting'
     ]
 
     def preview_field(self, instance):

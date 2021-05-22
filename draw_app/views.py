@@ -1,80 +1,58 @@
 import base64
-import django_rq
-import time
 
 from django.db import transaction
 from django.utils.timezone import now
 from django.core.files.base import ContentFile
-from rest_framework.response import Response
+from django.http import JsonResponse
 from rest_framework.decorators import api_view
+from rest_framework.serializers import Serializer, CharField
 
 from draw_app.notify_rollbar import notify_rollbar
 from .tasks import handle_image, handle_barcode
-from .custom_exceptions import (
-    ServiceNotRespond,
-    QrCodeNotValidError
-)
 
 from .models import (
     Customer, Receipt, FnsOrder
 )
 
 
+class ReceiptImageSerializer(Serializer):
+    chatId = CharField()
+    content = CharField()
+
+
 @transaction.atomic
-def get_receipt_and_raw_order(chat_id, image):
+def get_or_create_customer(chat_id):
     customer, create = Customer.objects.get_or_create(tg_chat_id=chat_id)
     if create:
         customer.save()
+    return customer
+
+
+@transaction.atomic
+def create_receipt_and_raw_order(customer, image):
 
     receipt = Receipt.objects.create(customer=customer)
     receipt.image.save(
         f'{now().strftime("%Y%m%d%H%M%s")}.png', ContentFile(image)
     )
-    fns_order, create = FnsOrder.objects.get_or_create(receipt=receipt, status='raw')
-    return receipt, fns_order
-
-
-@transaction.atomic
-def update_qr_recognized(barcode_item, *args):
-    receipt, order = args
-    if barcode_item:
-        receipt.qr_recognized = barcode_item
-        receipt.save()
-        order.сheck_ticket_info = barcode_item
-        order.status = 'sent'
-        order.save()
-
-
-@transaction.atomic
-def update_fns_answer(fns_answer, *args):
-    _, order = args
-    if fns_answer:
-        order.answer = fns_answer
-        order.status = 'received'
-        order.save()
-
-
-def waiting_task_finish(current_task):
-    while not current_task.result:
-        time.sleep(0.1)
+    fns_order, _ = FnsOrder.objects.get_or_create(receipt=receipt, status='raw')
+    return receipt.id, fns_order.id
 
 
 @api_view(['POST'])
 def handle_receipt_image(request):
-    try:
-        with notify_rollbar():
-            chat_id = request.data['chatId']
-            image = base64.b64decode(request.data['content'])
-            receipt_and_order = get_receipt_and_raw_order(chat_id, image)
-            if receipt_and_order:
-                queue = django_rq.get_queue('default')
-                barcode = queue.enqueue(handle_image, chat_id, image, *receipt_and_order)
-                waiting_task_finish(barcode)
-                update_qr_recognized(barcode.result, *receipt_and_order)
-                fns_answer = queue.enqueue(handle_barcode, chat_id, barcode.result, *receipt_and_order)
-                waiting_task_finish(fns_answer)
-                update_fns_answer(fns_answer.result, *receipt_and_order)
-    except (ServiceNotRespond, QrCodeNotValidError) as error:
-        return Response(f'fail: {error}')
 
-    return Response('ok')
+    with notify_rollbar():
+        serializer = ReceiptImageSerializer(data=request.data)
+        if serializer.is_valid():
+            chat_id = serializer.data['chatId']
+            image = base64.b64decode(serializer.data['content'])
+            current_customer = get_or_create_customer(chat_id)
+            receipt_and_order_ids = create_receipt_and_raw_order(current_customer, image)
+            if receipt_and_order_ids:
+                barcode = handle_image.delay(chat_id, receipt_and_order_ids)
+                handle_barcode.delay(
+                    chat_id, receipt_and_order_ids, depends_on=barcode
+                )
+            return JsonResponse({'replay': 'ok'}, status=200)
+        return JsonResponse(serializer.errors, status=400)

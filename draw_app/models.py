@@ -4,29 +4,15 @@ from phonenumber_field.modelfields import PhoneNumberField
 from django.contrib.auth.models import AbstractUser
 
 
-GROUPS_OF_SETTING = (
-    ('Best Coverage Settings', 'Высокое качество распознования'),
-    ('Best Speed Settings', 'Высокая скорость распознования'),
-    ('Balance Settings', 'Сбалансированные настройки'),
-    ('Ultimate Coverage Settings', 'Максимальное качество распознования')
-)
-
-
-TYPES_OF_STATUS = (
-    ('raw', 'не обработан'),
-    ('sent', 'отправлен'),
-    ('received', 'получен'),
-    ('closed', 'закрыт'),
-)
-
-
-TYPES_OF_REQUESTS = (
-    ('dynamsoft', 'чтение qr-кодов'),
-    ('fns_api', 'получение данных из ФНС'),
-)
-
-
 class User(AbstractUser):
+
+    GROUPS_OF_SETTING = (
+        ('Best Coverage Settings', 'Высокое качество распознавания'),
+        ('Best Speed Settings', 'Высокая скорость распознавания'),
+        ('Balance Settings', 'Сбалансированные настройки'),
+        ('Ultimate Coverage Settings', 'Максимальное качество распознавания'),
+    )
+
     qr_setting = models.CharField(
         verbose_name='Варианты настроек распознования баркодов',
         choices=GROUPS_OF_SETTING,
@@ -120,6 +106,13 @@ class FnsOrderQuerySet(models.QuerySet):
 
 class FnsOrder(models.Model):
 
+    TYPES_OF_STATUS = (
+        ('raw', 'не обработан'),
+        ('sent', 'отправлен'),
+        ('received', 'получен'),
+        ('closed', 'закрыт'),
+    )
+
     receipt = models.ForeignKey(
         Receipt,
         verbose_name='Чек',
@@ -169,7 +162,13 @@ class FnsOrder(models.Model):
         return f'{self.first_requested_at}'
 
 
-class QRCodeRecognitionAttempt(models.Model):
+class ReceiptRecognitionOuterRequestStat(models.Model):
+
+    TYPES_OF_REQUESTS = (
+        ('dynamsoft', 'чтение qr-кодов'),
+        ('fns_api', 'получение данных из ФНС'),
+    )
+
     request_to = models.CharField(
         'Наименование сервиса для анализа чека',
         choices=TYPES_OF_REQUESTS,
@@ -192,7 +191,7 @@ class QRCodeRecognitionAttempt(models.Model):
         blank=True,
         db_index=True
     )
-    recognition_quality_setting = models.CharField(
+    dynamsoft_quality_setting = models.CharField(
         'Настройка качества распознования qr-кодов',
         blank=True,
         max_length=30,
@@ -207,7 +206,7 @@ class QRCodeRecognitionAttempt(models.Model):
 
     class Meta:
         ordering = ['-start_time']
-        verbose_name = 'Статистика распознования чеков'
+        verbose_name = 'Статистика распознования (qr коды и ФНС)'
 
     def __str__(self):
         return f'{self.request_to} {self.start_time}'
