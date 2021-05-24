@@ -5,7 +5,8 @@ After=network.target
 [Service]
 User=root
 Group=root
-ExecStart=/opt/bot_campaign_demo/env/bin/rq worker --with-scheduler
+WorkingDirectory=/opt/bot_campaign_demo/
+ExecStart=/opt/bot_campaign_demo/env/bin/python manage.py rqworker --with-scheduler
 Restart=always
 
 [Install]
