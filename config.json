@@ -1,0 +1,40 @@
+{
+    "listeners": {
+        "*:80": {
+            "pass": "routes"
+        }
+    },
+
+    "routes": [
+        {
+            "match": {
+                "uri": "/static/*"
+            },
+
+            "action": {
+                "share": "/opt/bot_campaign_demo/"
+            }
+        },
+        {
+            "action": {
+                "pass": "applications/django"
+            }
+        }
+    ],
+
+    "applications": {
+        "django": {
+            "type": "python 3.8",
+            "path": "/opt/bot_campaign_demo/",
+            "home": "/root/.pyenv/versions/bot_campaign_demo/",
+            "module": "lucky_draws.wsgi",
+            "environment": {
+                "DJANGO_SETTINGS_MODULE": "lucky_draws.settings",
+		"DB_ENGINE": "django.db.backends.postgresql",
+                "DB_NAME": "lucky_draws",
+                "DB_HOST": "127.0.0.1",
+                "DB_PORT": "5432"
+            }
+        }
+    }
+}
