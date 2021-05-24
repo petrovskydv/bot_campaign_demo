@@ -1,0 +1,12 @@
+[Unit]
+Description=RQ service for bot_campaign_demo
+After=network.target
+
+[Service]
+User=root
+Group=root
+ExecStart=/opt/bot_campaign_demo/env/bin/rq worker --with-scheduler
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
