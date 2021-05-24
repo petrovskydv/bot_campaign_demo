@@ -1,10 +1,9 @@
 from django.db import models
 from django.utils.html import mark_safe
 from phonenumber_field.modelfields import PhoneNumberField
-from django.contrib.auth.models import AbstractUser
 
 
-class User(AbstractUser):
+class Customer(models.Model):
 
     GROUPS_OF_SETTING = (
         ('Best Coverage Settings', 'Высокое качество распознавания'),
@@ -13,16 +12,6 @@ class User(AbstractUser):
         ('Ultimate Coverage Settings', 'Максимальное качество распознавания'),
     )
 
-    qr_setting = models.CharField(
-        verbose_name='Варианты настроек распознования баркодов',
-        choices=GROUPS_OF_SETTING,
-        default='Ultimate Coverage Settings',
-        max_length=30,
-        db_index=True
-    )
-
-
-class Customer(models.Model):
     date_joined = models.DateTimeField(
         'Когда присоединился',
         auto_now_add=True,
@@ -49,6 +38,13 @@ class Customer(models.Model):
         'Телефон',
         blank=True,
         null=True,
+        db_index=True
+    )
+    quality_setting = models.CharField(
+        verbose_name='Настройка качества распознования qr-кодов',
+        choices=GROUPS_OF_SETTING,
+        default='Ultimate Coverage Settings',
+        max_length=30,
         db_index=True
     )
 

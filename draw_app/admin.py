@@ -3,7 +3,6 @@ from django.utils.safestring import mark_safe
 
 
 from .models import (
-    User,
     Customer,
     FnsOrder,
     Receipt,
@@ -33,6 +32,7 @@ class CustomerAdmin(admin.ModelAdmin):
         'tg_first_name',
         'tg_chat_id',
         'phone',
+        'quality_setting',
     ]
     list_filter = ['date_joined']
     search_fields = ['date_joined', 'tg_chat_id', 'phone']
@@ -56,11 +56,6 @@ class ReceiptAdmin(admin.ModelAdmin):
     inlines = [FnsInline]
     list_display = ['uploaded_at', 'customer']
     list_filter = ['uploaded_at']
-
-
-@admin.register(User)
-class UserAdmin(admin.ModelAdmin):
-    pass
 
 
 @admin.register(ReceiptRecognitionOuterRequestStat)

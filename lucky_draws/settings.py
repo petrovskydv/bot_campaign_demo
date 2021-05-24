@@ -80,8 +80,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'lucky_draws.wsgi.application'
 
-AUTH_USER_MODEL = 'draw_app.User'
-
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 

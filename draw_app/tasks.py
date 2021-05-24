@@ -31,7 +31,7 @@ from draw_app.custom_exceptions import (
 )
 
 from .models import (
-    User, Receipt, FnsOrder, ReceiptRecognitionOuterRequestStat
+    Customer, Receipt, FnsOrder, ReceiptRecognitionOuterRequestStat
 )
 
 RETRY_COUNT = 3
@@ -124,7 +124,7 @@ def update_fns_answer(fns_answer, order_id):
 @handle_recognition_attempt('dynamsoft')
 def handle_image(chat_id, receipt_id, order_id, **options):
 
-    quality_setting = User.objects.filter(is_superuser=True).first().qr_setting
+    quality_setting = Customer.objects.get(tg_chat_id=chat_id).quality_setting
     if not quality_setting:
         raise QualitySettingNotFilled()
 
