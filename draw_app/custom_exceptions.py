@@ -1,13 +1,13 @@
 
-class ServiceNotRespond(Exception):
-    pass
-
-
 class QrCodeNoDataError(Exception):
     pass
 
 
 class QrCodeNotValidError(Exception):
+    pass
+
+
+class QualitySettingNotFilled(Exception):
     pass
 
 

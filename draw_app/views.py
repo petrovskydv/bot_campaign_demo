@@ -48,11 +48,11 @@ def handle_receipt_image(request):
             chat_id = serializer.data['chatId']
             image = base64.b64decode(serializer.data['content'])
             current_customer = get_or_create_customer(chat_id)
-            receipt_and_order_ids = create_receipt_and_raw_order(current_customer, image)
-            if receipt_and_order_ids:
-                barcode = handle_image.delay(chat_id, receipt_and_order_ids)
+            receipt_id, order_id = create_receipt_and_raw_order(current_customer, image)
+            if receipt_id and order_id:
+                handle_image_task = handle_image.delay(chat_id, receipt_id, order_id)
                 handle_barcode.delay(
-                    chat_id, receipt_and_order_ids, depends_on=barcode
+                    chat_id, receipt_id, order_id, depends_on=handle_image_task
                 )
             return JsonResponse({'replay': 'ok'}, status=200)
         return JsonResponse(serializer.errors, status=400)
