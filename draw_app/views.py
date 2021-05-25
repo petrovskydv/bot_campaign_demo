@@ -8,7 +8,12 @@ from rest_framework.decorators import api_view
 from rest_framework.serializers import Serializer, CharField
 
 from draw_app.notify_rollbar import notify_rollbar
-from .tasks import handle_image, handle_barcode
+from .tasks import (
+    handle_image, handle_barcode,
+    report_recognized_qr_code,
+    report_fns_api,
+    report_recognized_problems
+)
 
 from .models import (
     Customer, Receipt, FnsOrder
@@ -51,8 +56,16 @@ def handle_receipt_image(request):
             receipt_id, order_id = create_receipt_and_raw_order(current_customer, image)
             if receipt_id and order_id:
                 handle_image_task = handle_image.delay(chat_id, receipt_id, order_id)
-                handle_barcode.delay(
+                handle_barcode_task = handle_barcode.delay(
                     chat_id, receipt_id, order_id, depends_on=handle_image_task
                 )
+                report_recognized_qr_code.delay(
+                    chat_id, receipt_id, order_id, depends_on=handle_image_task
+                )
+                report_fns_api.delay(
+                    chat_id, receipt_id, order_id, depends_on=handle_barcode_task
+                )
+                # TODO Доделать запуск функции с задержкой
+                # report_recognized_problems.delay(chat_id, receipt_id, order_id, job_timeout=60)
             return JsonResponse({'replay': 'ok'}, status=200)
         return JsonResponse(serializer.errors, status=400)

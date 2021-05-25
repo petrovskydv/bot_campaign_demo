@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.html import mark_safe
 from phonenumber_field.modelfields import PhoneNumberField
+from django.core.validators import MinValueValidator
 
 
 class Customer(models.Model):
@@ -199,6 +200,8 @@ class ReceiptRecognitionOuterRequestStat(models.Model):
         on_delete=models.CASCADE,
         related_name='attempts'
     )
+    sent_notification = models.BooleanField(default=False)
+
 
     class Meta:
         ordering = ['-start_time']

@@ -60,7 +60,10 @@ class ReceiptAdmin(admin.ModelAdmin):
 
 @admin.register(ReceiptRecognitionOuterRequestStat)
 class QReceiptRecognitionOuterRequestStatAdmin(admin.ModelAdmin):
-    readonly_fields = ['preview_field']
+    readonly_fields = [
+        'preview_field',
+        'dynamsoft_quality_setting',
+    ]
     list_display = [
         'receipt', 'request_to', 'start_time',
         'end_time', 'recognition_time_field',
@@ -69,7 +72,7 @@ class QReceiptRecognitionOuterRequestStatAdmin(admin.ModelAdmin):
     ]
     list_filter = [
         'request_to', 'start_time', 'end_time',
-        'reason_for_failure', 'dynamsoft_quality_setting'
+        'reason_for_failure', 'dynamsoft_quality_setting',
     ]
 
     def preview_field(self, instance):
