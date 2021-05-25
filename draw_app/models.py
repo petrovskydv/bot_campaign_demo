@@ -22,13 +22,11 @@ class Customer(models.Model):
         'Юзернейм в Telegram',
         max_length=64,
         blank=True,
-        default=''
     )
     tg_first_name = models.CharField(
         'Имя в Telegram',
         max_length=64,
         blank=True,
-        default=''
     )
     tg_chat_id = models.PositiveIntegerField(
         'Telegram chat ID',
@@ -80,8 +78,7 @@ class Receipt(models.Model):
         'Распознанный qr',
         max_length=128,
         blank=True,
-        default='',
-        db_index=True
+        db_index=True,
     )
 
     class Meta:
@@ -132,8 +129,7 @@ class FnsOrder(models.Model):
         'Распознанный qr',
         max_length=128,
         blank=True,
-        default='',
-        db_index=True
+        db_index=True,
     )
     status = models.CharField(
         verbose_name='Статус',
