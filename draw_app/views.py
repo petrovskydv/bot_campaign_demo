@@ -69,3 +69,22 @@ def handle_receipt_image(request):
                 # report_recognized_problems.delay(chat_id, receipt_id, order_id, job_timeout=60)
             return JsonResponse({'replay': 'ok'}, status=200)
         return JsonResponse(serializer.errors, status=400)
+
+
+@api_view(['GET'])
+def handle_purchases(request, tg_chat_id):
+    with notify_rollbar():
+        fns_orders = FnsOrder.objects.filter(
+            receipt__customer__tg_chat_id=tg_chat_id,
+        ).exclude(answer={})
+
+        if not fns_orders:
+            return JsonResponse({'purchases': 'Покупок пока нет'}, status=200)
+
+        purchases = []
+
+        for fns_order in fns_orders:
+            product_names = [product['name'] for product in fns_order.answer.values()]
+            purchases.append(', '.join(product_names) + '\n\n')
+
+        return JsonResponse({'purchases': purchases}, status=200)
