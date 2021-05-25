@@ -1,0 +1,13 @@
+[Unit]
+Description=RQ service for bot_campaign_demo
+After=network.target
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/opt/bot_campaign_demo/
+ExecStart=/opt/bot_campaign_demo/env/bin/python manage.py rqworker --with-scheduler
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -31,21 +31,31 @@ $ pip install -r requirements.txt
 `TG_BOT_NAME` - Имя телеграмм бота привязанного к Node-RED.
 
 
-## Установка базы данных
+## Установка Postgres, Redis и Node-RED
 
-Для установки Postgres сервиса, требуется Docker.
-
-Создайте новый docker контейнер:
+Для установки сервисов требуется Docker.
 
 ```bash
 $ docker-compose up
 ```
 
-Проверьте что Docker создан и выполняется:
+## Настройка Node-RED
 
-```bash
-$ docker ps
-```
+Открыть в браузере [Node-RED](http://127.0.0.1:1880/).
+
+Поставить модули (Главное меню -> Управление палитрой -> Установить):
+  - `node-red-contrib-chatbot`
+  - `node-red-contrib-image-tools`
+  - `node-red-contrib-telegrambot`
+  - `node-red-node-base64`
+
+Развернуть файл проекта, меню Node-RED -> Импорт -> Указываем файл `flows.json` из каталога `node-red-api` проекта.
+
+Установить в свойствах ноды Telegram Receiver и Telegram Sender конфигурацию заранее зарегистрированного бота для работы с Node-RED. Эти параметры указаны в файле виртуального окружения.
+
+В ноде `HOST` указать адрес хоста. (TODO: перенести настройку в переменные окружения.)
+
+Для запуска конфигурации Node-RED нажимаем Развернуть. 
 
 ## Создание и запуск проекта
 
@@ -150,24 +160,33 @@ rq-dashboard
 
 ![](https://python-rq.org/img/dashboard.png)
 
-# Запуск прототипа распознавания чеков из телеграмм бота.
+# Деплой на сервер
 
-![](.assets/node-red-flow.png)
-
-Открыть в браузере [Node-RED](http://127.0.0.1:1880/).
-
-Поставить модули (Главное меню -> Управление палитрой -> Установить):
-  - `node-red-contrib-chatbot`
-  - `node-red-contrib-image-tools`
-  - `node-red-contrib-telegrambot`
-  - `node-red-node-base64`
-
-Развернуть файл проекта в меню Node-RED - Импорт. Указываем файл `flows.json` из каталога `node-red-api` проекта.
-
-Установить в свойствах ноды Telegram Receiver и Telegram Sender конфигурацию заранее зарегистрированного бота для работы с Node-RED. Эти параметры указаны в файле виртуального окружения.
-
-Для запуска конфигурации Node-RED нажимаем Развернуть. 
-
-В переменную окружения `ALLOWED_HOSTS` добавьте `host.docker.internal`, что бы Node-RED мог взаимодействовать с локальным веб-сервером Django.
-
-Бот готов для распознавания чеков ККМ. Введите `/start`
+1. Клонировать репозиторий в `/opt/bot_campaign_demo/`
+2. Создать виртуальное окружение:
+```
+python3 -m venv env
+```
+3. Установить зависимости:
+```
+pip install -r requirements.txt
+```
+4. Запустить docker-compose:
+```
+docker-compose up
+```
+5. Постаить [Nginx Unit](https://unit.nginx.org/installation/)
+6. Настроить `Nginx Unit`, для Ubuntu (для других ОС инструкция на [оф. сайте](https://unit.nginx.org/installation/)):
+```bash
+sudo curl -X PUT --data-binary @unit.config --unix-socket /var/run/control.unit.sock http://localhost/config/
+```
+7. Скопировать `django-rq.service` в `/etc/systemd/system/`, затем:
+```bash
+systemctl start django-rq.service
+systemctl enable django-rq.service
+```
+Убедиться, что сервис работает:
+```bash
+systemctl status django-rq.service
+```
+8. Готово!

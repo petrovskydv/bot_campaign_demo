@@ -3,7 +3,7 @@ services:
   postgres:
     image: "postgres:12.0-alpine"
     volumes:
-      - ./volumes/postgres:/var/lib/postgresql/data
+      - "../volumes/postgres:/var/lib/postgresql/data"
     ports:
       - "127.0.0.1:5432:5432"
     environment:
@@ -15,20 +15,19 @@ services:
   node-red:
     image: nodered/node-red
     volumes:
-      - "./volumes/node_red:/data"
+      - "../volumes/node_red:/data"
     ports:
       - "1880:1880"
     environment:
       TZ: Europe/Moscow
       TG_TOKEN: ${TG_TOKEN}
       TG_BOT_NAME: ${TG_BOT_NAME}
-      HOST: ${DOCKERHOST}
     restart: always
 
   django-rq:
     image: redis
     volumes:
-      - ./volumes/redis:/data
+      - "../volumes/redis:/data"
     ports:
       - "6379:6379"
     restart: always
