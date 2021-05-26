@@ -132,6 +132,9 @@ def handle_image(chat_id, receipt_id, order_id, **options):
     if not quality_setting:
         raise QualitySettingNotFilled()
 
+    if options.get('current_attempt'):
+        options['current_attempt'].dynamsoft_quality_setting = quality_setting
+
     image = Receipt.objects.get(id=receipt_id).image
     reader = BarcodeReader()
     reader.init_license(settings.DYNAM_LICENSE_KEY)
@@ -149,9 +152,6 @@ def handle_image(chat_id, receipt_id, order_id, **options):
 
     valid_barcode = get_valid_barcode(barcodes)
     update_qr_recognized(valid_barcode, receipt_id, order_id)
-
-    if options.get('current_attempt'):
-        options['current_attempt'].dynamsoft_quality_setting = quality_setting
 
 
 @job('default', retry=Retry(max=RETRY_COUNT, interval=RETRY_INTERVALS))
