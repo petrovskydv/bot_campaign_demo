@@ -38,7 +38,7 @@ from .models import (
 )
 
 RETRY_COUNT = 3
-RETRY_INTERVALS = [60, 3600, 86400]
+RETRY_INTERVALS = [30, 3600, 86400]
 
 
 @contextlib.contextmanager
@@ -171,7 +171,7 @@ def handle_barcode(chat_id, receipt_id, order_id, **options):
         update_fns_answer(items_names, order_id)
 
 
-@job('default', retry=Retry(max=RETRY_COUNT, interval=RETRY_INTERVALS))
+@job('default', retry=Retry(max=1, interval=RETRY_INTERVALS))
 @suppress(Receipt.DoesNotExist, ReceiptRecognitionOuterRequestStat.DoesNotExist)
 def report_recognized_qr_code(chat_id, receipt_id, order_id, **options):
     recognized_code = Receipt.objects.get(id=receipt_id).qr_recognized
