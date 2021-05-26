@@ -175,7 +175,7 @@ pip install -r requirements.txt
 ```
 docker-compose up
 ```
-5. Постаить [Nginx Unit](https://unit.nginx.org/installation/)
+5. Поставить [Nginx Unit](https://unit.nginx.org/installation/)
 6. Настроить `Nginx Unit`, для Ubuntu (для других ОС инструкция на [оф. сайте](https://unit.nginx.org/installation/)):
 ```bash
 sudo curl -X PUT --data-binary @unit.config --unix-socket /var/run/control.unit.sock http://localhost/config/
