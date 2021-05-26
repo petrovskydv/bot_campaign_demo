@@ -155,6 +155,18 @@ class FnsOrder(models.Model):
         return f'{self.first_requested_at}'
 
 
+class ReceiptRecognitionOuterRequestStatQuerySet(models.QuerySet):
+    def get_successful_attempts(self, request_to, receipt_id):
+        return self.filter(
+            receipt__id=receipt_id, request_to=request_to, reason_for_failure=''
+        ).order_by('-start_time')
+
+    def get_failed_attempts(self, request_to, receipt_id):
+        return self.filter(
+            receipt__id=receipt_id, request_to=request_to
+        ).exclude(reason_for_failure='').order_by('-start_time', 'sent_notification')
+
+
 class ReceiptRecognitionOuterRequestStat(models.Model):
 
     TYPES_OF_REQUESTS = (
@@ -198,6 +210,7 @@ class ReceiptRecognitionOuterRequestStat(models.Model):
     )
     sent_notification = models.BooleanField(default=False)
 
+    objects = ReceiptRecognitionOuterRequestStatQuerySet.as_manager()
 
     class Meta:
         ordering = ['-start_time']
