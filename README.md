@@ -180,13 +180,13 @@ docker-compose up
 ```bash
 sudo curl -X PUT --data-binary @unit.config --unix-socket /var/run/control.unit.sock http://localhost/config/
 ```
-7. Скопировать `django-rq.service` в `/etc/systemd/system/`, затем:
+7. Скопировать `django-rqworker.service` в `/etc/systemd/system/`, затем:
 ```bash
-systemctl start django-rq.service
-systemctl enable django-rq.service
+systemctl start django-rqworker.service
+systemctl enable django-rqworker.service
 ```
 Убедиться, что сервис работает:
 ```bash
-systemctl status django-rq.service
+systemctl status django-rqworker.service
 ```
 8. Готово!
