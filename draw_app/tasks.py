@@ -37,7 +37,7 @@ from .models import (
 )
 
 RETRY_COUNT = 3
-RETRY_INTERVALS = [30, 3600, 86400]
+RETRY_INTERVALS = [10, 3600, 86400]
 
 
 @contextlib.contextmanager
