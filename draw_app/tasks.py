@@ -64,12 +64,21 @@ def create_recognition_attempt(receipt_id, request_to):
 
 def repr_exceptions(exc):
     if isinstance(exc, (BarcodeReaderError, QrCodeNoDataError)):
+        return textwrap.dedent(r'''
+        Ошибка распознавания QR-кода, проверьте загруженное изображение и
+        по возможности сфотографируйте заново.
+        ''')
+    elif isinstance(exc, FnsQRError):
+        return textwrap.dedent(r'''
+        Ваш QR-код мы распознали, но информация на нем,
+        не соответствует полученной из налогового органа.
+        ''')
+    elif isinstance(exc, FnsNoDataYetError):
         return r'''
-                Ошибка распознавания QR-кода, проверьте загруженное изображение и
-                по возможности сфотографируйте заново.'''
-    elif isinstance(exc, (FnsQRError, FnsNoDataYetError, QrCodeNotValidError)):
+        Ваш QR-код мы распознали, но в налоговой еще нет информации о нем.'''
+    elif isinstance(exc, QrCodeNotValidError):
         return r'''
-                Ваш QR-код мы распознали, но похоже, что он не от чека с покупками.'''
+        Ваш QR-код мы распознали, но похоже, что он не от чека с покупками.'''
     elif isinstance(exc, QualitySettingNotFilled):
         return r'''Не заполнена настройка качества распознавания QR-кодов.'''
     elif isinstance(exc, (requests.HTTPError, requests.ConnectionError)):
@@ -170,25 +179,25 @@ def handle_barcode(chat_id, receipt_id, order_id, **options):
         update_fns_answer(items_names, order_id)
 
 
-@job('default', retry=Retry(max=1, interval=RETRY_INTERVALS))
+@job('default', retry=Retry(max=RETRY_COUNT, interval=RETRY_INTERVALS))
 @suppress(Receipt.DoesNotExist, ReceiptRecognitionOuterRequestStat.DoesNotExist)
 def report_recognized_qr_code(chat_id, receipt_id, order_id, **options):
     recognized_code = Receipt.objects.get(id=receipt_id).qr_recognized
 
     if not recognized_code:
-        time.sleep(1)  # даем немного времени другим таскам записать работу в бд
         dynamsoft_failed_attempts = \
             ReceiptRecognitionOuterRequestStat.objects.get_failed_attempts(
                 'dynamsoft', receipt_id
             )
         if dynamsoft_failed_attempts:
-            send_message_to_nr(
-                chat_id,
-                textwrap.dedent(f'''
-                Попытка распознования № {dynamsoft_failed_attempts.count()}:
-                - Статус распознавания: {dynamsoft_failed_attempts.first().reason_for_failure}.
-                ''')
-            )
+            reason_for_failure = dynamsoft_failed_attempts.first().reason_for_failure
+            if not ReceiptRecognitionOuterRequestStat.objects.is_sent_notification(
+                'dynamsoft', receipt_id, reason_for_failure
+            ):
+                send_message_to_nr(
+                    chat_id,
+                    f'- Статус распознавания: {reason_for_failure}.'
+                )
             dynamsoft_failed_attempts.update(sent_notification=True)
         raise InvalidJobOperation
 
@@ -212,17 +221,17 @@ def report_fns_api(chat_id, receipt_id, order_id, **options):
     fns_answer = FnsOrder.objects.get(id=order_id).answer
 
     if not fns_answer:
-        time.sleep(1)  # даем немного времени другим таскам записать работу в бд
         fns_failed_attempts = \
             ReceiptRecognitionOuterRequestStat.objects.get_failed_attempts(
                 'fns_api', receipt_id
             )
         if fns_failed_attempts:
+            fns_failed_attempt = fns_failed_attempts.first()
             send_message_to_nr(
                 chat_id,
                 textwrap.dedent(f'''
-                Попытка отправки в ФНС № {fns_failed_attempts.count()}:
-                - Статус ответа из ФНС: {fns_failed_attempts.first().reason_for_failure}.
+                Попытка отправки в ФНС для чека {fns_failed_attempt.receipt}:
+                - Статус ответа из ФНС: {fns_failed_attempt.reason_for_failure}.
                 ''')
             )
             fns_failed_attempts.update(sent_notification=True)
@@ -233,8 +242,15 @@ def report_fns_api(chat_id, receipt_id, order_id, **options):
             'dynamsoft', receipt_id
         ).first()
     recognized_time = (fns_api_attempt.end_time - fns_api_attempt.start_time)
+
+    product_list = "\n".join([
+        f'-{item["name"]}  {item["quantity"]}  {item["price"]/100}' for _, item in fns_answer.items()
+    ])
+
     text_message = textwrap.dedent(f'''
-    - Результат запроса в налоговую: {fns_answer},
+    - Результат запроса в налоговую:
+    {product_list},
     - Время получения ответа ФНС: {recognized_time.seconds}.{recognized_time.microseconds}
     ''')
     send_message_to_nr(chat_id, text_message)
+    send_message_to_nr(chat_id, f'{fns_answer}')
