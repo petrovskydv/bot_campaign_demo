@@ -1,8 +1,11 @@
+import redis
 import requests
+from dateutil import parser
 from requests_toolbelt.adapters import source
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 
 
 XML_GET_TOKEN_BODY = f'''<soap:Envelope soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"
@@ -65,10 +68,33 @@ def get_fns_token(fns_response):
     return token.text, expired_at.text
 
 
+def get_token_expired_sec(expired_at):
+    now = timezone.now()
+    return (parser.parse(expired_at) - now).seconds
+
+
+def get_or_create_token():
+    redis_settings = settings.RQ_QUEUES['default']
+
+    r = redis.Redis(
+        host = redis_settings['HOST'],
+        port = redis_settings['PORT'],
+        password = redis_settings['PASSWORD'],
+        decode_responses=True
+    )
+
+    token = r.get(settings.FNS_TEMPORARY_TOKEN_REDIS_KEY)
+
+    if not token:
+        fns_response = get_fns_response(XML_GET_TOKEN_BODY)
+        token, expired_at = get_fns_token(fns_response)
+        token_expired_sec = get_token_expired_sec(expired_at)
+        r.set(settings.FNS_TEMPORARY_TOKEN_REDIS_KEY, token, token_expired_sec)
+
+    return token
+
+
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        fns_response = get_fns_response(XML_GET_TOKEN_BODY)
-        fns_token, expired_at = get_fns_token(fns_response)
-
-        print(f'Token: {fns_token}')
-        print(f'Expired at: {expired_at}')
+        token = get_or_create_token()
+        print(f'==========\nToken: {token}\n==========')
