@@ -65,9 +65,13 @@ class QReceiptRecognitionOuterRequestStatAdmin(admin.ModelAdmin):
         'dynamsoft_quality_setting',
     ]
     list_display = [
-        'receipt', 'request_to', 'start_time',
-        'end_time', 'recognition_time_field',
-        'reason_for_failure', 'preview_field',
+        'receipt',
+        'request_to',
+        'recognition_time_field',
+        'preview_field',
+        'reason_for_failure',
+        'start_time',
+        'end_time',
         'dynamsoft_quality_setting',
     ]
     list_filter = [

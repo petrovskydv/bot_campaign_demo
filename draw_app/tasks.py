@@ -3,7 +3,6 @@ import requests
 import functools
 import contextlib
 import textwrap
-import time
 
 from django.conf import settings
 from django.utils.timezone import now

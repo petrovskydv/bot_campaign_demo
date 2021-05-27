@@ -1,7 +1,6 @@
 from django.db import models
 from django.utils.html import mark_safe
 from phonenumber_field.modelfields import PhoneNumberField
-from django.core.validators import MinValueValidator
 
 
 class Customer(models.Model):
