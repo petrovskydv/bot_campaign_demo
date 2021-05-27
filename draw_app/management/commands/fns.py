@@ -70,5 +70,5 @@ class Command(BaseCommand):
         fns_response = get_fns_response(XML_GET_TOKEN_BODY)
         fns_token, expired_at = get_fns_token(fns_response)
 
-        print('Token: {fns_token}')
-        print('Expired at: {expired_at}')
+        print(f'Token: {fns_token}')
+        print(f'Expired at: {expired_at}')
