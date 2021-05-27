@@ -162,8 +162,16 @@ class ReceiptRecognitionOuterRequestStatQuerySet(models.QuerySet):
 
     def get_failed_attempts(self, request_to, receipt_id):
         return self.filter(
-            receipt__id=receipt_id, request_to=request_to
-        ).exclude(reason_for_failure='').order_by('-start_time', 'sent_notification')
+            receipt__id=receipt_id, request_to=request_to, sent_notification=False
+        ).exclude(reason_for_failure='').order_by('-start_time')
+
+    def is_sent_notification(self, request_to, receipt_id, notification):
+        attempts = self.filter(
+            receipt__id=receipt_id, request_to=request_to, reason_for_failure=notification
+        ).order_by('-sent_notification')
+        if not attempts:
+            return True
+        return attempts.first().sent_notification
 
 
 class ReceiptRecognitionOuterRequestStat(models.Model):
