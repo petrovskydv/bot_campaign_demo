@@ -175,13 +175,13 @@ class ReceiptRecognitionOuterRequestStat(models.Model):
     )
 
     request_to = models.CharField(
-        'Наименование сервиса для анализа чека',
+        'Сервис для анализа чека',
         choices=TYPES_OF_REQUESTS,
         max_length=25,
         db_index=True,
     )
     start_time = models.DateTimeField(
-        'Время отправки чека для анализа',
+        'Время отправки чека',
         auto_now_add=True,
         db_index=True
     )
@@ -191,7 +191,7 @@ class ReceiptRecognitionOuterRequestStat(models.Model):
         db_index=True
     )
     reason_for_failure = models.CharField(
-        'Причина неудачи анализа чека',
+        'Причина неудачи',
         max_length=255,
         blank=True,
         db_index=True
