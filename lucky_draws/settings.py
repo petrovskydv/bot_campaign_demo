@@ -159,3 +159,7 @@ RQ_QUEUES = {
         'PASSWORD': env.str('REDIS_PASSWORD', ''),
     },
 }
+
+FNS_MASTER_TOKEN = env.str('FNS_MASTER_TOKEN', '')
+FNS_REQUEST_INTERFACE = '10.19.0.7'
+FNS_URL_ENDPOINT = 'https://openapi.nalog.ru:8090/open-api/AuthService/0.1'
