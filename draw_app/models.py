@@ -86,7 +86,7 @@ class Receipt(models.Model):
         verbose_name_plural = 'Чеки'
 
     def __str__(self):
-        return f'{self.uploaded_at}'
+        return f'№ {self.id} от {self.uploaded_at.strftime("%d.%m.%Y %H:%M")}'
 
     def get_preview(self):
         return mark_safe(f'<img src="{self.image.url}" width="300">')
