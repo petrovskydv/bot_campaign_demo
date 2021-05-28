@@ -4,17 +4,16 @@ import functools
 import contextlib
 import textwrap
 
+from datetime import timedelta
 from django.conf import settings
 from django.utils.timezone import now
 from django.db import transaction
-from django_rq import job
+from django_rq import job, get_queue
 from dbr import (
     BarcodeReader,
     BarcodeReaderError
 )
 from rq import Retry
-from rq.exceptions import InvalidJobOperation
-
 from qr_codes_recognition.barcode_reader import (
     init_runtime_settings,
     set_barcode_format,
@@ -37,7 +36,7 @@ from .models import (
 )
 
 RETRY_COUNT = 3
-RETRY_INTERVALS = [10, 3600, 86400]
+RETRY_INTERVALS = [60, 3600, 86400]
 
 
 @contextlib.contextmanager
@@ -60,6 +59,18 @@ def create_recognition_attempt(receipt_id, request_to):
         raise
     finally:
         recognition_attempt.save()
+
+
+def launch_user_notification(chat_id, receipt_id, order_id, request_to):
+    current_queue = get_queue()
+    if request_to == 'dynamsoft':
+        current_queue.enqueue_in(
+            timedelta(seconds=15), report_recognized_qr_code, chat_id, receipt_id, order_id
+        )
+    if request_to == 'fns_api':
+        current_queue.enqueue_in(
+            timedelta(seconds=15), report_fns_api, chat_id, receipt_id, order_id
+        )
 
 
 def repr_exceptions(exc):
@@ -150,13 +161,12 @@ def handle_image(chat_id, receipt_id, order_id, **options):
     init_runtime_settings(reader, quality_setting)
     set_barcode_format(reader, settings.BARCODE_FORMAT)
 
+    launch_user_notification(chat_id, receipt_id, order_id, 'dynamsoft')
+
     with open(image.path, "rb") as image_handler:
         barcodes = decode_file_stream(
             reader, image_handler.read()
         )
-
-    if not barcodes:
-        raise QrCodeNoDataError()
 
     valid_barcode = get_valid_barcode(barcodes)
     update_qr_recognized(valid_barcode, receipt_id, order_id)
@@ -175,31 +185,48 @@ def handle_barcode(chat_id, receipt_id, order_id, **options):
     )
     items_names = format_receipt_items(receipt_items, to_dict=True)
 
+    launch_user_notification(chat_id, receipt_id, order_id, 'fns_api')
+
     if items_names:
         update_fns_answer(items_names, order_id)
 
 
-@job('default', retry=Retry(max=RETRY_COUNT, interval=RETRY_INTERVALS))
+def handle_failed_attempts(chat_id, receipt_id, request_to):
+    failed_attempts = \
+        ReceiptRecognitionOuterRequestStat.objects.get_failed_attempts(
+            request_to, receipt_id
+        )
+    if failed_attempts:
+        failed_attempt = failed_attempts.first()
+        reason_for_failure = failed_attempt.reason_for_failure
+        if not ReceiptRecognitionOuterRequestStat.objects.is_sent_notification(
+            request_to, receipt_id, reason_for_failure
+        ):
+            if request_to == 'dynamsoft':
+                test_message = \
+                    textwrap.dedent(f'''
+                    Попытка распознавания чека {failed_attempt.receipt}:
+                    Статус распознавания: {reason_for_failure}.
+                    ''')
+            elif request_to == 'fns_api':
+                test_message = \
+                    textwrap.dedent(f'''
+                    Попытка отправки в ФНС для чека {failed_attempt.receipt}:
+                    Статус ответа из ФНС: {reason_for_failure}.
+                    ''')
+
+            send_message_to_nr(chat_id, test_message)
+        failed_attempts.update(sent_notification=True)
+    return True
+
+
+@job('default')
 @suppress(Receipt.DoesNotExist, ReceiptRecognitionOuterRequestStat.DoesNotExist)
 def report_recognized_qr_code(chat_id, receipt_id, order_id, **options):
     recognized_code = Receipt.objects.get(id=receipt_id).qr_recognized
 
     if not recognized_code:
-        dynamsoft_failed_attempts = \
-            ReceiptRecognitionOuterRequestStat.objects.get_failed_attempts(
-                'dynamsoft', receipt_id
-            )
-        if dynamsoft_failed_attempts:
-            reason_for_failure = dynamsoft_failed_attempts.first().reason_for_failure
-            if not ReceiptRecognitionOuterRequestStat.objects.is_sent_notification(
-                'dynamsoft', receipt_id, reason_for_failure
-            ):
-                send_message_to_nr(
-                    chat_id,
-                    f'- Статус распознавания: {reason_for_failure}.'
-                )
-            dynamsoft_failed_attempts.update(sent_notification=True)
-        raise InvalidJobOperation
+        return handle_failed_attempts(chat_id, receipt_id, 'dynamsoft')
 
     recognized_status = 'qr код успешно распознан'
     dynamsoft_attempt = \
@@ -215,31 +242,17 @@ def report_recognized_qr_code(chat_id, receipt_id, order_id, **options):
     send_message_to_nr(chat_id, text_message)
 
 
-@job('default', retry=Retry(max=RETRY_COUNT, interval=RETRY_INTERVALS))
+@job('default')
 @suppress(FnsOrder.DoesNotExist, ReceiptRecognitionOuterRequestStat.DoesNotExist)
 def report_fns_api(chat_id, receipt_id, order_id, **options):
     fns_answer = FnsOrder.objects.get(id=order_id).answer
 
     if not fns_answer:
-        fns_failed_attempts = \
-            ReceiptRecognitionOuterRequestStat.objects.get_failed_attempts(
-                'fns_api', receipt_id
-            )
-        if fns_failed_attempts:
-            fns_failed_attempt = fns_failed_attempts.first()
-            send_message_to_nr(
-                chat_id,
-                textwrap.dedent(f'''
-                Попытка отправки в ФНС для чека {fns_failed_attempt.receipt}:
-                - Статус ответа из ФНС: {fns_failed_attempt.reason_for_failure}.
-                ''')
-            )
-            fns_failed_attempts.update(sent_notification=True)
-        raise InvalidJobOperation
+        return handle_failed_attempts(chat_id, receipt_id, 'fns_api')
 
     fns_api_attempt = \
         ReceiptRecognitionOuterRequestStat.objects.get_successful_attempts(
-            'dynamsoft', receipt_id
+            'fns_api', receipt_id
         ).first()
     recognized_time = (fns_api_attempt.end_time - fns_api_attempt.start_time)
 

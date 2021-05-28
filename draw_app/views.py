@@ -10,8 +10,6 @@ from rest_framework.serializers import Serializer, CharField
 from draw_app.notify_rollbar import notify_rollbar
 from .tasks import (
     handle_image, handle_barcode,
-    report_recognized_qr_code,
-    report_fns_api
 )
 
 from .models import (
@@ -58,8 +56,6 @@ def handle_receipt_image(request):
                 handle_barcode.delay(
                     chat_id, receipt_id, order_id, depends_on=handle_image_task
                 )
-                report_recognized_qr_code.delay(chat_id, receipt_id, order_id)
-                report_fns_api.delay(chat_id, receipt_id, order_id)
             return JsonResponse({'replay': 'ok'}, status=200)
         return JsonResponse(serializer.errors, status=400)
 
