@@ -1,6 +1,8 @@
 anyio==2.2.0
 asgiref==3.3.4
+beautifulsoup4==4.9.3
 requests==2.25.1
+requests-toolbelt==0.9.1
 click==7.1.2 # RQ worker пока не работает с click версии выше
 Django==3.2.2
 rollbar==0.15.2
