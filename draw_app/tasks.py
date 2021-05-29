@@ -147,6 +147,8 @@ def update_fns_answer(fns_answer, order_id):
 def handle_image(chat_id, receipt_id, order_id, **options):
     valid_barcode = ''
 
+    launch_user_notification(chat_id, receipt_id, order_id, 'dynamsoft')
+
     quality_setting = Customer.objects.get(tg_chat_id=chat_id).quality_setting
     if not quality_setting:
         raise QualitySettingNotFilled()
@@ -160,8 +162,6 @@ def handle_image(chat_id, receipt_id, order_id, **options):
 
     init_runtime_settings(reader, quality_setting)
     set_barcode_format(reader, settings.BARCODE_FORMAT)
-
-    launch_user_notification(chat_id, receipt_id, order_id, 'dynamsoft')
 
     with open(image.path, "rb") as image_handler:
         barcodes = decode_file_stream(
@@ -177,6 +177,8 @@ def handle_image(chat_id, receipt_id, order_id, **options):
 @handle_recognition_attempt('fns_api')
 def handle_barcode(chat_id, receipt_id, order_id, **options):
 
+    launch_user_notification(chat_id, receipt_id, order_id, 'fns_api')
+
     qrcode = Receipt.objects.get(id=receipt_id).qr_recognized
     receipt_items = get_fns_responce_receipt_items(
         qrcode, settings.INN,
@@ -184,8 +186,6 @@ def handle_barcode(chat_id, receipt_id, order_id, **options):
         settings.PASSWORD
     )
     items_names = format_receipt_items(receipt_items, to_dict=True)
-
-    launch_user_notification(chat_id, receipt_id, order_id, 'fns_api')
 
     if items_names:
         update_fns_answer(items_names, order_id)
