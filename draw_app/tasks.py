@@ -237,7 +237,7 @@ def report_recognized_qr_code(chat_id, receipt_id, order_id, **options):
     text_message = textwrap.dedent(f'''
     - Статус распознавания: {recognized_status},
     {recognized_code}
-    - Время распознования qr кода: {recognized_time.seconds}.{recognized_time.microseconds},
+    - Время распознавания qr кода: {recognized_time.seconds}.{recognized_time.microseconds},
     ''')
     send_message_to_nr(chat_id, text_message)
 

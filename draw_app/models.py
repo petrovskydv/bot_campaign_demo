@@ -5,7 +5,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 class Customer(models.Model):
 
-    GROUPS_OF_SETTING = (
+    SETTING_CHOICES = (
         ('Best Coverage Settings', 'Высокое качество распознавания'),
         ('Best Speed Settings', 'Высокая скорость распознавания'),
         ('Balance Settings', 'Сбалансированные настройки'),
@@ -39,8 +39,8 @@ class Customer(models.Model):
         db_index=True
     )
     quality_setting = models.CharField(
-        verbose_name='Настройка качества распознования qr-кодов',
-        choices=GROUPS_OF_SETTING,
+        verbose_name='Настройка качества распознавания qr-кодов',
+        choices=SETTING_CHOICES,
         default='Ultimate Coverage Settings',
         max_length=30,
         db_index=True
@@ -99,7 +99,7 @@ class FnsOrderQuerySet(models.QuerySet):
 
 class FnsOrder(models.Model):
 
-    TYPES_OF_STATUS = (
+    STATUS_CHOICES = (
         ('raw', 'не обработан'),
         ('sent', 'отправлен'),
         ('received', 'получен'),
@@ -132,7 +132,7 @@ class FnsOrder(models.Model):
     )
     status = models.CharField(
         verbose_name='Статус',
-        choices=TYPES_OF_STATUS,
+        choices=STATUS_CHOICES,
         max_length=25,
         default='raw',
         db_index=True,
@@ -176,14 +176,14 @@ class ReceiptRecognitionOuterRequestStatQuerySet(models.QuerySet):
 
 class ReceiptRecognitionOuterRequestStat(models.Model):
 
-    TYPES_OF_REQUESTS = (
+    REQUESTS_CHOICES = (
         ('dynamsoft', 'чтение qr-кодов'),
         ('fns_api', 'получение данных из ФНС'),
     )
 
     request_to = models.CharField(
         'Сервис для анализа чека',
-        choices=TYPES_OF_REQUESTS,
+        choices=REQUESTS_CHOICES,
         max_length=25,
         db_index=True,
     )
@@ -204,7 +204,7 @@ class ReceiptRecognitionOuterRequestStat(models.Model):
         db_index=True
     )
     dynamsoft_quality_setting = models.CharField(
-        'Настройка качества распознования qr-кодов',
+        'Настройка качества распознавания qr-кодов',
         blank=True,
         max_length=30,
         db_index=True
@@ -221,7 +221,7 @@ class ReceiptRecognitionOuterRequestStat(models.Model):
 
     class Meta:
         ordering = ['-start_time']
-        verbose_name = 'Статистика распознования (qr коды и ФНС)'
+        verbose_name = 'Статистика распознавания (qr коды и ФНС)'
 
     def __str__(self):
         return f'{self.request_to} {self.start_time}'

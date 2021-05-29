@@ -87,4 +87,4 @@ class QReceiptRecognitionOuterRequestStatAdmin(admin.ModelAdmin):
         return mark_safe(f'<p>{recognition_time.seconds}.{recognition_time.microseconds}</p>')
 
     preview_field.short_description = u'превью чека'
-    recognition_time_field.short_description = u'время распознования, сек'
+    recognition_time_field.short_description = u'время распознавания, сек'
