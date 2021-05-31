@@ -1,3 +1,8 @@
+import base64
+import time
+from datetime import datetime
+from urllib.parse import parse_qs
+
 import redis
 import requests
 from dateutil import parser
@@ -8,7 +13,12 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 
-XML_GET_TOKEN_BODY = f'''<soap:Envelope soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"
+DELAY = 2
+FNS_RESPONSE_COMPLETED = 'COMPLETED'
+FNS_RESPONSE_PROCESSING = 'PROCESSING'
+
+GET_TOKEN_XML = f'''
+<soap:Envelope soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"
     xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -23,14 +33,57 @@ XML_GET_TOKEN_BODY = f'''<soap:Envelope soap:encodingStyle="http://schemas.xmlso
             </Message>
         </GetMessageRequest>
     </soap:Body>
-</soap:Envelope>'''
+</soap:Envelope>
+'''
+
+GET_MESSAGE_ID_XML = '''
+<soap-env:Envelope xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
+	<soap-env:Body>
+		<ns0:SendMessageRequest xmlns:ns0="urn://x-artefacts-gnivc-ru/inplat/servin/OpenApiAsyncMessageConsumerService/types/1.0">
+			<ns0:Message>
+				<tns:GetTicketRequest xmlns:tns="urn://x-artefacts-gnivc-ru/ais3/kkt/KktTicketService/types/1.0">
+					<tns:GetTicketInfo>
+						<tns:Sum>{s}</tns:Sum>
+						<tns:Date>{t}</tns:Date>
+						<tns:Fn>{fn}</tns:Fn>
+						<tns:TypeOperation>{n}</tns:TypeOperation>
+						<tns:FiscalDocumentId>{i}</tns:FiscalDocumentId>
+						<tns:FiscalSign>{fp}</tns:FiscalSign>
+						<tns:RawData>true</tns:RawData>
+					</tns:GetTicketInfo>
+				</tns:GetTicketRequest>
+			</ns0:Message>
+		</ns0:SendMessageRequest>
+	</soap-env:Body>
+</soap-env:Envelope>
+'''
+
+GET_PURCHASES_XML = '''
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns="urn://x-artefacts-gnivc-ru/inplat/servin/OpenApiAsyncMessageConsumerService/types/1.0">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <ns:GetMessageRequest>
+         <ns:MessageId>{message_id}</ns:MessageId>
+      </ns:GetMessageRequest>
+   </soapenv:Body>
+</soapenv:Envelope>
+'''
 
 
-class FnsError(Exception):
+class FnsGetTemporaryTokenError(Exception):
     pass
 
 
-def get_fns_response(xml_body):
+def get_session():
+    session = requests.Session()
+    interface = source.SourceAddressAdapter(settings.FNS_REQUEST_INTERFACE)
+    session.mount('http://', interface)
+    session.mount('https://', interface)
+
+    return session
+
+
+def get_fns_token(xml_body):
     headers = {
         'Content-Type': 'text/xml',
         'Accept-Charset': 'utf-8',
@@ -40,30 +93,23 @@ def get_fns_response(xml_body):
         'wsdl': ''
     }
 
-    session = requests.Session()
-    interface = source.SourceAddressAdapter(settings.FNS_REQUEST_INTERFACE)
-    session.mount('http://', interface)
-    session.mount('https://', interface)
+    session = get_session()
 
     response = session.post(
-        settings.FNS_URL_ENDPOINT,
+        settings.FNS_AUTH_ENDPOINT,
         headers=headers,
         params=params,
         data=xml_body
     )
 
     response.raise_for_status()
-    return response
-
-
-def get_fns_token(fns_response):
-    soup = BeautifulSoup(fns_response.text, 'xml')
+    soup = BeautifulSoup(response.text, 'xml')
 
     token = soup.find('Token')
     expired_at = soup.find('ExpireTime')
 
     if not all([token, expired_at]):
-        raise FnsError
+        raise FnsGetTemporaryTokenError
 
     return token.text, expired_at.text
 
@@ -86,15 +132,102 @@ def get_or_create_token():
     token = r.get(settings.FNS_TEMPORARY_TOKEN_REDIS_KEY)
 
     if not token:
-        fns_response = get_fns_response(XML_GET_TOKEN_BODY)
-        token, expired_at = get_fns_token(fns_response)
+        token, expired_at = get_fns_token(GET_TOKEN_XML)
         token_expired_sec = get_token_expired_sec(expired_at)
         r.set(settings.FNS_TEMPORARY_TOKEN_REDIS_KEY, token, token_expired_sec)
 
     return token
 
 
+def prepare_message_id_request_xml(qr_recognized):
+    parsed_keys = parse_qs(qr_recognized)
+
+    xml = GET_MESSAGE_ID_XML.format(
+        s=int(float(parsed_keys['s'][0]) * 100),
+        t=parser.parse(parsed_keys['t'][0]).isoformat(),
+        fn=parsed_keys['fn'][0],
+        n=parsed_keys['n'][0],
+        i=parsed_keys['i'][0],
+        fp=parsed_keys['fp'][0],
+    )
+
+    return xml
+
+
+def get_message_id(qr_recognized):
+    headers = {
+        'Content-Type': 'text/xml',
+        'Accept-Charset': 'utf-8',
+        'FNS-OpenApi-Token': get_or_create_token(),
+        'FNS-OpenApi-UserToken': base64.b64encode(settings.FNS_APPID.encode()).decode()
+    }
+
+    params = {
+        'wsdl': ''
+    }
+
+    session = get_session()
+
+    response = session.post(
+        settings.FNS_KKT_SERVICE_ENDPOINT,
+        headers=headers,
+        params=params,
+        data=prepare_message_id_request_xml(qr_recognized)
+    )
+
+    response.raise_for_status()
+
+    soup = BeautifulSoup(response.text, 'xml')
+
+    return soup.find('MessageId').text
+
+
+def get_purchases(message_id):
+    headers = {
+        'Content-Type': 'text/xml',
+        'Accept-Charset': 'utf-8',
+        'FNS-OpenApi-Token': get_or_create_token(),
+        'FNS-OpenApi-UserToken': base64.b64encode(settings.FNS_APPID.encode()).decode()
+    }
+
+    params = {
+        'wsdl': ''
+    }
+
+    while True:
+        session = get_session()
+        response = session.post(
+            settings.FNS_KKT_SERVICE_ENDPOINT,
+            headers=headers,
+            params=params,
+            data=GET_PURCHASES_XML.format(message_id=message_id)
+        )
+
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'xml')
+        status = soup.find('ProcessingStatus').text
+
+        if status == FNS_RESPONSE_COMPLETED:
+            return soup.find('Ticket').text
+
+        if status == FNS_RESPONSE_PROCESSING:
+            print(f'Status: {FNS_RESPONSE_PROCESSING}')
+            time.sleep(DELAY)
+
+
 class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'qr',
+            type=str,
+            help='Recognized QR code'
+        )
+
     def handle(self, *args, **options):
-        token = get_or_create_token()
-        print(f'==========\nToken: {token}\n==========')
+        qr_recognized = options['qr']
+
+        message_id = get_message_id(qr_recognized)
+        print(message_id)
+
+        purchases = get_purchases(message_id)
+        print(purchases)
