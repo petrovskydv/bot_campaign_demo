@@ -61,18 +61,6 @@ def create_recognition_attempt(receipt_id, request_to):
         recognition_attempt.save()
 
 
-def launch_user_notification(chat_id, receipt_id, order_id, request_to):
-    current_queue = get_queue()
-    if request_to == 'dynamsoft':
-        current_queue.enqueue_in(
-            timedelta(seconds=15), report_recognized_qr_code, chat_id, receipt_id, order_id
-        )
-    if request_to == 'fns_api':
-        current_queue.enqueue_in(
-            timedelta(seconds=15), report_fns_api, chat_id, receipt_id, order_id
-        )
-
-
 def repr_exceptions(exc):
     if isinstance(exc, (BarcodeReaderError, QrCodeNoDataError)):
         return textwrap.dedent(r'''
@@ -114,6 +102,28 @@ def handle_recognition_attempt(request_to):
     return wrap
 
 
+def launch_user_notification(request_to):
+    def wrap(func):
+        @functools.wraps(func)
+        def run_func(chat_id, receipt_id, order_id):
+            try:
+                func(chat_id, receipt_id, order_id)
+            except: # noqa
+                raise
+            finally:
+                current_queue = get_queue()
+                if request_to == 'dynamsoft':
+                    current_queue.enqueue_in(
+                        timedelta(seconds=1), report_recognized_qr_code, chat_id, receipt_id, order_id
+                    )
+                if request_to == 'fns_api':
+                    current_queue.enqueue_in(
+                        timedelta(seconds=1), report_fns_api, chat_id, receipt_id, order_id
+                    )
+        return run_func
+    return wrap
+
+
 def get_valid_barcode(barcodes):
     pattern = r'''^t=[0-9A-Z]*&s=[0-9.]*&fn=[0-9]*&i=[0-9]*&fp=[0-9]*&n=[1-9]'''
     for barcode in barcodes:
@@ -144,11 +154,10 @@ def update_fns_answer(fns_answer, order_id):
 
 @job('default', retry=Retry(max=RETRY_COUNT, interval=RETRY_INTERVALS))
 @suppress(Receipt.DoesNotExist, FnsOrder.DoesNotExist)
+@launch_user_notification('dynamsoft')
 @handle_recognition_attempt('dynamsoft')
 def handle_image(chat_id, receipt_id, order_id, **options):
     valid_barcode = ''
-
-    launch_user_notification(chat_id, receipt_id, order_id, 'dynamsoft')
 
     quality_setting = Customer.objects.get(tg_chat_id=chat_id).quality_setting
     if not quality_setting:
@@ -175,10 +184,9 @@ def handle_image(chat_id, receipt_id, order_id, **options):
 
 @job('default', retry=Retry(max=RETRY_COUNT, interval=RETRY_INTERVALS))
 @suppress(Receipt.DoesNotExist, FnsOrder.DoesNotExist)
+@launch_user_notification('fns_api')
 @handle_recognition_attempt('fns_api')
 def handle_barcode(chat_id, receipt_id, order_id, **options):
-
-    launch_user_notification(chat_id, receipt_id, order_id, 'fns_api')
 
     qrcode = Receipt.objects.get(id=receipt_id).qr_recognized
     receipt_items = get_fns_responce_receipt_items(
@@ -193,31 +201,38 @@ def handle_barcode(chat_id, receipt_id, order_id, **options):
 
 
 def handle_failed_attempts(chat_id, receipt_id, request_to):
-    failed_attempts = \
-        ReceiptRecognitionOuterRequestStat.objects.get_failed_attempts(
-            request_to, receipt_id
-        )
-    if failed_attempts:
-        failed_attempt = failed_attempts.first()
-        reason_for_failure = failed_attempt.reason_for_failure
-        if not ReceiptRecognitionOuterRequestStat.objects.is_sent_notification(
-            request_to, receipt_id, reason_for_failure
-        ):
-            if request_to == 'dynamsoft':
-                test_message = \
-                    textwrap.dedent(f'''
-                    Попытка распознавания чека {failed_attempt.receipt}:
-                    Статус распознавания: {reason_for_failure}.
-                    ''')
-            elif request_to == 'fns_api':
-                test_message = \
-                    textwrap.dedent(f'''
-                    Попытка отправки в ФНС для чека {failed_attempt.receipt}:
-                    Статус ответа из ФНС: {reason_for_failure}.
-                    ''')
+    sent_notifications = \
+        ReceiptRecognitionOuterRequestStat.objects.sent_notifications().filter(
+            receipt__id=receipt_id, request_to=request_to
+        ).values_list('reason_for_failure')
 
-            send_message_to_nr(chat_id, test_message)
-        failed_attempts.update(sent_notification=True)
+    failed_attempts = ReceiptRecognitionOuterRequestStat.objects.failed().filter(
+        receipt__id=receipt_id, request_to=request_to
+    ).exclude(reason_for_failure__in=sent_notifications)
+
+    failed_attempt = failed_attempts.first()
+    if not failed_attempt:
+        return True
+
+    reason_for_failure = failed_attempt.reason_for_failure
+    test_message = ''
+    if request_to == 'dynamsoft':
+        test_message = \
+            textwrap.dedent(f'''
+            Попытка распознавания чека {failed_attempt.receipt}:
+            Статус распознавания: {reason_for_failure}.
+            ''')
+    elif request_to == 'fns_api':
+        test_message = \
+            textwrap.dedent(f'''
+            Попытка отправки в ФНС для чека {failed_attempt.receipt}:
+            Статус ответа из ФНС: {reason_for_failure}.
+            ''')
+
+    if test_message:
+        send_message_to_nr(chat_id, test_message)
+
+    failed_attempts.update(sent_notification=True)
     return True
 
 
@@ -231,9 +246,9 @@ def report_recognized_qr_code(chat_id, receipt_id, order_id, **options):
 
     recognized_status = 'qr код успешно распознан'
     dynamsoft_attempt = \
-        ReceiptRecognitionOuterRequestStat.objects.get_successful_attempts(
-            'dynamsoft', receipt_id
-        ).first()
+        ReceiptRecognitionOuterRequestStat.objects.successful().filter(
+            receipt__id=receipt_id, request_to='dynamsoft'
+        ).get()
     recognized_time = (dynamsoft_attempt.end_time - dynamsoft_attempt.start_time)
     text_message = textwrap.dedent(f'''
     - Статус распознавания: {recognized_status},
@@ -252,9 +267,9 @@ def report_fns_api(chat_id, receipt_id, order_id, **options):
         return handle_failed_attempts(chat_id, receipt_id, 'fns_api')
 
     fns_api_attempt = \
-        ReceiptRecognitionOuterRequestStat.objects.get_successful_attempts(
-            'fns_api', receipt_id
-        ).first()
+        ReceiptRecognitionOuterRequestStat.objects.successful().filter(
+            receipt__id=receipt_id, request_to='fns_api'
+        ).get()
     recognized_time = (fns_api_attempt.end_time - fns_api_attempt.start_time)
 
     product_list = "\n".join([

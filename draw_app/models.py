@@ -155,23 +155,14 @@ class FnsOrder(models.Model):
 
 
 class ReceiptRecognitionOuterRequestStatQuerySet(models.QuerySet):
-    def get_successful_attempts(self, request_to, receipt_id):
-        return self.filter(
-            receipt__id=receipt_id, request_to=request_to, reason_for_failure=''
-        ).order_by('-start_time')
+    def successful(self):
+        return self.filter(reason_for_failure='')
 
-    def get_failed_attempts(self, request_to, receipt_id):
-        return self.filter(
-            receipt__id=receipt_id, request_to=request_to, sent_notification=False
-        ).exclude(reason_for_failure='').order_by('-start_time')
+    def failed(self):
+        return self.filter(sent_notification=False).exclude(reason_for_failure='')
 
-    def is_sent_notification(self, request_to, receipt_id, notification):
-        attempts = self.filter(
-            receipt__id=receipt_id, request_to=request_to, reason_for_failure=notification
-        ).order_by('-sent_notification')
-        if not attempts:
-            return True
-        return attempts.first().sent_notification
+    def sent_notifications(self):
+        return self.filter(sent_notification=True)
 
 
 class ReceiptRecognitionOuterRequestStat(models.Model):
