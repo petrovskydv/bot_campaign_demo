@@ -7,7 +7,6 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework.serializers import Serializer, CharField
 
-from draw_app.notify_rollbar import notify_rollbar
 from .tasks import (
     handle_image, handle_barcode,
 )
