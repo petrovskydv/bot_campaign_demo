@@ -1,5 +1,5 @@
 from django.db import models
-from django.utils.html import mark_safe
+from django.utils.html import format_html
 from phonenumber_field.modelfields import PhoneNumberField
 
 
@@ -89,7 +89,7 @@ class Receipt(models.Model):
         return f'№ {self.id} от {self.uploaded_at.strftime("%d.%m.%Y %H:%M")}'
 
     def get_preview(self):
-        return mark_safe(f'<img src="{self.image.url}" width="300">')
+        return format_html('<img src="{}" width="300">', self.image.url)
 
 
 class FnsOrderQuerySet(models.QuerySet):
@@ -206,7 +206,7 @@ class ReceiptRecognitionOuterRequestStat(models.Model):
         on_delete=models.CASCADE,
         related_name='attempts'
     )
-    sent_notification = models.BooleanField(default=False)
+    sent_notification = models.BooleanField(default=False, db_index=True)
 
     objects = ReceiptRecognitionOuterRequestStatQuerySet.as_manager()
 

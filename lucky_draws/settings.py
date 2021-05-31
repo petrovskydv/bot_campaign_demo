@@ -162,6 +162,8 @@ RQ_QUEUES = {
 }
 
 FNS_MASTER_TOKEN = env.str('FNS_MASTER_TOKEN', '')
+FNS_APPID = env.str('FNS_APPID', '')
 FNS_TEMPORARY_TOKEN_REDIS_KEY = 'fns_open_api_temporary_token'
 FNS_REQUEST_INTERFACE = '10.19.0.7'
-FNS_URL_ENDPOINT = 'https://openapi.nalog.ru:8090/open-api/AuthService/0.1'
+FNS_AUTH_ENDPOINT = 'https://openapi.nalog.ru:8090/open-api/AuthService/0.1'
+FNS_KKT_SERVICE_ENDPOINT = 'https://openapi.nalog.ru:8090/open-api/ais3/KktService/0.1'
