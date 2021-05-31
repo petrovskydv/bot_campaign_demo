@@ -124,7 +124,7 @@ class FnsOrder(models.Model):
         auto_now=True,
         db_index=True
     )
-    check_ticket_info = models.CharField(
+    qr_recognized = models.CharField(
         'Распознанный qr',
         max_length=128,
         blank=True,

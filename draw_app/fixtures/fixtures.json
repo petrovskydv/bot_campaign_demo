@@ -79,7 +79,7 @@
             "receipt": 1,
             "first_requested_at": "2021-05-11 11:36:03.596838",
             "last_requested_at": "2021-05-11 11:36:03.596840",
-            "check_ticket_info": "",
+            "qr_recognized": "",
             "status": "raw",
             "answer": {}
         }
@@ -91,7 +91,7 @@
             "receipt": 1,
             "first_requested_at": "2021-05-11 11:36:03.596844",
             "last_requested_at": "2021-05-11 11:36:03.596846",
-            "check_ticket_info": "t=20210503T1340&s=120.98&fn=9280440301237466&i=26723&fp=72696611&n=1",
+            "qr_recognized": "t=20210503T1340&s=120.98&fn=9280440301237466&i=26723&fp=72696611&n=1",
             "status": "closed",
             "answer": {}
         }
@@ -103,7 +103,7 @@
             "receipt": 1,
             "first_requested_at": "2021-05-11 11:36:03.596849",
             "last_requested_at": "2021-05-11 11:36:03.596852",
-            "check_ticket_info": "t=20210501T1923&s=130.97&fn=9280440301360090&i=3799&fp=1916102250&n=1",
+            "qr_recognized": "t=20210501T1923&s=130.97&fn=9280440301360090&i=3799&fp=1916102250&n=1",
             "status": "closed",
             "answer": {}
         }

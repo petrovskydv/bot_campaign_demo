@@ -130,6 +130,7 @@ def update_qr_recognized(barcode, receipt_id, order_id):
     receipt.save()
     order.сheck_ticket_info = barcode
     order.status = 'sent'
+    order.qr_recognized = barcode
     order.save()
 
 
