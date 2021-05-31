@@ -1,16 +1,15 @@
 import base64
 import time
-from datetime import datetime
 from urllib.parse import parse_qs
 
 import redis
 import requests
-from dateutil import parser
-from requests_toolbelt.adapters import source
 from bs4 import BeautifulSoup
+from dateutil import parser
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
+from requests_toolbelt.adapters import source
 
 
 DELAY = 2
