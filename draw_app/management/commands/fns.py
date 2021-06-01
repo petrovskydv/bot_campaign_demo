@@ -73,6 +73,10 @@ class FnsGetTemporaryTokenError(Exception):
     pass
 
 
+class WrongQrRecognizedError(Exception):
+    pass
+
+
 def get_session():
     session = requests.Session()
     interface = source.SourceAddressAdapter(settings.FNS_REQUEST_INTERFACE)
@@ -207,7 +211,11 @@ def get_purchases(message_id):
         status = soup.find('ProcessingStatus').text
 
         if status == FNS_RESPONSE_COMPLETED:
-            return soup.find('Ticket').text
+            code = soup.find('Code').text
+            if code == '200':
+                return soup.find('Ticket').text
+
+            raise WrongQrRecognizedError
 
         if status == FNS_RESPONSE_PROCESSING:
             print(f'Status: {FNS_RESPONSE_PROCESSING}')
