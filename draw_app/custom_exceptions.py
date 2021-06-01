@@ -17,3 +17,7 @@ class FnsQRError(Exception):
 
 class FnsNoDataYetError(Exception):
     pass
+
+
+class FnsGetTemporaryTokenError(Exception):
+    pass

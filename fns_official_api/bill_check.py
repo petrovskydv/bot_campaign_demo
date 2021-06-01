@@ -1,5 +1,6 @@
 import base64
 import json
+import time
 from urllib.parse import parse_qs
 
 import redis
@@ -183,8 +184,11 @@ def get_message_id(qr_recognized):
     return soup.find('MessageId').text
 
 
-def get_purchases(qr_recognized):
-    message_id = get_message_id(qr_recognized)
+def get_purchases(qr_recognized, message_id=None):
+    if not message_id:
+        message_id = get_message_id(qr_recognized)
+        time.sleep(DELAY)
+
     headers = {
         'Content-Type': 'text/xml',
         'Accept-Charset': 'utf-8',

@@ -27,16 +27,22 @@ from fns_open_api.bill_check import (
 from node_red_api.node_red_lib import send_message_to_nr
 from draw_app.extra_functools import suppress
 from draw_app.custom_exceptions import (
-    QrCodeNoDataError, FnsQRError, FnsNoDataYetError,
-    QrCodeNotValidError, QualitySettingNotFilled
+    QrCodeNoDataError,
+    FnsQRError,
+    FnsNoDataYetError,
+    QrCodeNotValidError,
+    QualitySettingNotFilled,
+    FnsGetTemporaryTokenError,
 )
+
+from fns_official_api.bill_check import get_purchases
 
 from .models import (
     Customer, Receipt, FnsOrder, ReceiptRecognitionOuterRequestStat
 )
 
-RETRY_COUNT = 3
-RETRY_INTERVALS = [60, 3600, 86400]
+RETRY_COUNT = 5
+RETRY_INTERVALS = [3, 15, 60, 3600, 86400]
 
 
 @contextlib.contextmanager
@@ -86,6 +92,8 @@ def repr_exceptions(exc):
         return r'''Чек отсутствует или удален в базе данных.'''
     elif isinstance(exc, FnsOrder.DoesNotExist):
         return r'''Заказ в налоговую отсутствует или удален в базе данных.'''
+    elif isinstance(exc, FnsGetTemporaryTokenError):
+        return r'''Ошибка при получении временного токена в налоговой'''
 
 
 def handle_recognition_attempt(request_to):
@@ -200,6 +208,19 @@ def handle_barcode(chat_id, receipt_id, order_id, **options):
         update_fns_answer(items_names, order_id)
 
 
+@job('default', retry=Retry(max=RETRY_COUNT, interval=RETRY_INTERVALS))
+@suppress(Receipt.DoesNotExist, FnsOrder.DoesNotExist)
+@launch_user_notification('fns_api')
+@handle_recognition_attempt('fns_api')
+def handle_barcode_official(chat_id, receipt_id, order_id, **options):
+
+    qrcode = Receipt.objects.get(id=receipt_id).qr_recognized
+    receipt_items = get_purchases(qrcode)
+
+    if receipt_items:
+        update_fns_answer(receipt_items, order_id)
+
+
 def handle_failed_attempts(chat_id, receipt_id, request_to):
     sent_notifications = \
         ReceiptRecognitionOuterRequestStat.objects.sent_notifications().filter(
@@ -272,14 +293,15 @@ def report_fns_api(chat_id, receipt_id, order_id, **options):
         ).get()
     recognized_time = (fns_api_attempt.end_time - fns_api_attempt.start_time)
 
-    product_list = "\n".join([
-        f'-{item["name"]}  {item["quantity"]}  {item["price"]/100}' for _, item in fns_answer.items()
+    products = "\n".join([
+        f'🛒 {item["name"]}: {item["quantity"]} шт, {item["price"]/100} ₽' for item in fns_answer['content']['items']
     ])
 
-    text_message = textwrap.dedent(f'''
-    - Результат запроса в налоговую:
-    {product_list},
-    - Время получения ответа ФНС: {recognized_time.seconds}.{recognized_time.microseconds}
-    ''')
-    send_message_to_nr(chat_id, text_message)
-    send_message_to_nr(chat_id, f'{fns_answer}')
+    message = [
+        'Результат запроса в налоговую:',
+        products,
+        f'Время получения ответа ФНС: {recognized_time.seconds}.{recognized_time.microseconds}',
+    ]
+
+    send_message_to_nr(chat_id, '\n\n'.join(message))
+    send_message_to_nr(chat_id, f'Результат запроса в формате JSON:\n\n{fns_answer}')
