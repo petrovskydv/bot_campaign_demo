@@ -1,4 +1,5 @@
 import base64
+import json
 import time
 from urllib.parse import parse_qs
 
@@ -213,7 +214,8 @@ def get_purchases(message_id):
         if status == FNS_RESPONSE_COMPLETED:
             code = soup.find('Code').text
             if code == '200':
-                return soup.find('Ticket').text
+                purchases = soup.find('Ticket').text
+                return json.loads(purchases)
 
             raise WrongQrRecognizedError
 
