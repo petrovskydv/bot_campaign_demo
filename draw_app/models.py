@@ -52,7 +52,7 @@ class Customer(models.Model):
         verbose_name_plural = 'Участники'
 
     def __str__(self):
-        return self.tg_username
+        return self.tg_username or f'{self.tg_chat_id}'
 
 
 class Receipt(models.Model):
@@ -124,11 +124,10 @@ class FnsOrder(models.Model):
         auto_now=True,
         db_index=True
     )
-    qr_recognized = models.CharField(
-        'Распознанный qr',
+    message_id = models.CharField(
+        'ID запроса',
         max_length=128,
         blank=True,
-        db_index=True,
     )
     status = models.CharField(
         verbose_name='Статус',
@@ -140,7 +139,6 @@ class FnsOrder(models.Model):
     answer = models.JSONField(
         'Ответ налоговой',
         default=dict,
-        db_index=True
     )
 
     objects = FnsOrderQuerySet.as_manager()

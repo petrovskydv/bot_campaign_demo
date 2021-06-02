@@ -44,7 +44,7 @@ class FnsOrderAdmin(admin.ModelAdmin):
         'receipt',
         'first_requested_at',
         'last_requested_at',
-        'qr_recognized',
+        'message_id',
         'status',
     ]
     list_filter = ['first_requested_at', 'last_requested_at']
@@ -54,7 +54,7 @@ class FnsOrderAdmin(admin.ModelAdmin):
 @admin.register(Receipt)
 class ReceiptAdmin(admin.ModelAdmin):
     inlines = [FnsInline]
-    list_display = ['uploaded_at', 'customer']
+    list_display = ['uploaded_at', 'customer', 'qr_recognized']
     list_filter = ['uploaded_at']
 
 
