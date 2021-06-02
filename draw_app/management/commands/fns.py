@@ -149,7 +149,7 @@ def prepare_message_id_request_xml(qr_recognized):
     parsed_keys = parse_qs(qr_recognized)
 
     xml = GET_MESSAGE_ID_XML.format(
-        s=int(float(parsed_keys['s'][0]) * 100),
+        s=parsed_keys['s'][0].replace('.', ''),
         t=parser.parse(parsed_keys['t'][0]).isoformat(),
         fn=parsed_keys['fn'][0],
         n=parsed_keys['n'][0],
