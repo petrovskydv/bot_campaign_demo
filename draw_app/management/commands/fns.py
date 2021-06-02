@@ -12,8 +12,18 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from requests_toolbelt.adapters import source
 
+from draw_app.custom_exceptions import (
+    FnsGetTemporaryTokenError,
+    FnsNoDataYetError,
+    FnsQRError,
+    FnsNotAvailable,
+    FnsCashboxCompleteError,
+    FnsInternalError,
+    FnsProcessing,
+)
 
-DELAY = 2
+
+DELAY = 5
 FNS_RESPONSE_COMPLETED = 'COMPLETED'
 FNS_RESPONSE_PROCESSING = 'PROCESSING'
 
@@ -68,14 +78,6 @@ GET_PURCHASES_XML = '''
    </soapenv:Body>
 </soapenv:Envelope>
 '''
-
-
-class FnsGetTemporaryTokenError(Exception):
-    pass
-
-
-class WrongQrRecognizedError(Exception):
-    pass
 
 
 def get_session():
@@ -155,6 +157,8 @@ def prepare_message_id_request_xml(qr_recognized):
         fp=parsed_keys['fp'][0],
     )
 
+    print(xml)
+
     return xml
 
 
@@ -211,13 +215,40 @@ def get_purchases(message_id):
         soup = BeautifulSoup(response.text, 'xml')
         status = soup.find('ProcessingStatus').text
 
+        print(soup)
+
         if status == FNS_RESPONSE_COMPLETED:
             code = soup.find('Code').text
             if code == '200':
+                # Все ОК
                 purchases = soup.find('Ticket').text
                 return json.loads(purchases)
 
-            raise WrongQrRecognizedError
+            if code == '455':
+                # Чек ещё не успел попасть в хранилище ФНС России.
+                # Следует повторить запрос через 5, 15, 40, 60 минут,
+                # потом через 3, 9, 10 часов. Если чек всё ещё не найден –
+                # перестать отправлять запросы. Чек, поступивший позднее
+                # должен считаться поступившим с нарушениями.
+                raise FnsNoDataYetError
+
+            if code == '544':
+                # Касса не завершила регистрационные действия.
+                # Стоит однократно повторить запрос через 24 часа
+                raise FnsCashboxCompleteError
+
+            if code in ['503', '532', '527']:
+                # Сервис недоступен/высокая нагрузка на сервис,
+                # повторить отправку запроса
+                raise FnsNotAvailable
+
+            if code in ['529', '530', '531', '532', '533', '543']:
+                # Внутренняя ошибка сервиса, повторить отправку запроса
+                raise FnsInternalError
+
+            # Ошибка проверки чека, формат отправленных данных некорректен,
+            # повторять запрос не нужно
+            raise FnsQRError
 
         if status == FNS_RESPONSE_PROCESSING:
             print(f'Status: {FNS_RESPONSE_PROCESSING}')
