@@ -26,6 +26,7 @@ from fns_open_api.bill_check import (
 )
 from node_red_api.node_red_lib import send_message_to_nr
 from draw_app.extra_functools import suppress
+from draw_app.notify_rollbar import notify_rollbar
 from draw_app.custom_exceptions import (
     QrCodeNoDataError,
     FnsQRError,
@@ -165,29 +166,30 @@ def update_fns_answer(fns_answer, order_id):
 @launch_user_notification('dynamsoft')
 @handle_recognition_attempt('dynamsoft')
 def handle_image(chat_id, receipt_id, order_id, **options):
-    valid_barcode = ''
+    with notify_rollbar(extra_data={'Номер чека': receipt_id}):
+        valid_barcode = ''
 
-    quality_setting = Customer.objects.get(tg_chat_id=chat_id).quality_setting
-    if not quality_setting:
-        raise QualitySettingNotFilled()
+        quality_setting = Customer.objects.get(tg_chat_id=chat_id).quality_setting
+        if not quality_setting:
+            raise QualitySettingNotFilled()
 
-    if options.get('current_attempt'):
-        options['current_attempt'].dynamsoft_quality_setting = quality_setting
+        if options.get('current_attempt'):
+            options['current_attempt'].dynamsoft_quality_setting = quality_setting
 
-    image = Receipt.objects.get(id=receipt_id).image
-    reader = BarcodeReader()
-    reader.init_license(settings.DYNAM_LICENSE_KEY)
+        image = Receipt.objects.get(id=receipt_id).image
+        reader = BarcodeReader()
+        reader.init_license(settings.DYNAM_LICENSE_KEY)
 
-    init_runtime_settings(reader, quality_setting)
-    set_barcode_format(reader, settings.BARCODE_FORMAT)
+        init_runtime_settings(reader, quality_setting)
+        set_barcode_format(reader, settings.BARCODE_FORMAT)
 
-    with open(image.path, "rb") as image_handler:
-        barcodes = decode_file_stream(
-            reader, image_handler.read()
-        )
+        with open(image.path, "rb") as image_handler:
+            barcodes = decode_file_stream(
+                reader, image_handler.read()
+            )
 
-    valid_barcode = get_valid_barcode(barcodes)
-    update_qr_recognized(valid_barcode, receipt_id, order_id)
+        valid_barcode = get_valid_barcode(barcodes)
+        update_qr_recognized(valid_barcode, receipt_id, order_id)
 
 
 @job('default', retry=Retry(max=RETRY_COUNT, interval=RETRY_INTERVALS))
@@ -195,17 +197,17 @@ def handle_image(chat_id, receipt_id, order_id, **options):
 @launch_user_notification('fns_api')
 @handle_recognition_attempt('fns_api')
 def handle_barcode(chat_id, receipt_id, order_id, **options):
+    with notify_rollbar(extra_data={'Номер чека': receipt_id}):
+        qrcode = Receipt.objects.get(id=receipt_id).qr_recognized
+        receipt_items = get_fns_responce_receipt_items(
+            qrcode, settings.INN,
+            settings.CLIENT_SECRET,
+            settings.PASSWORD
+        )
+        items_names = format_receipt_items(receipt_items, to_dict=True)
 
-    qrcode = Receipt.objects.get(id=receipt_id).qr_recognized
-    receipt_items = get_fns_responce_receipt_items(
-        qrcode, settings.INN,
-        settings.CLIENT_SECRET,
-        settings.PASSWORD
-    )
-    items_names = format_receipt_items(receipt_items, to_dict=True)
-
-    if items_names:
-        update_fns_answer(items_names, order_id)
+        if items_names:
+            update_fns_answer(items_names, order_id)
 
 
 @job('default', retry=Retry(max=RETRY_COUNT, interval=RETRY_INTERVALS))
@@ -213,12 +215,12 @@ def handle_barcode(chat_id, receipt_id, order_id, **options):
 @launch_user_notification('fns_api')
 @handle_recognition_attempt('fns_api')
 def handle_barcode_official(chat_id, receipt_id, order_id, **options):
+    with notify_rollbar(extra_data={'Номер чека': receipt_id}):
+        qrcode = Receipt.objects.get(id=receipt_id).qr_recognized
+        receipt_items = get_purchases(qrcode)
 
-    qrcode = Receipt.objects.get(id=receipt_id).qr_recognized
-    receipt_items = get_purchases(qrcode)
-
-    if receipt_items:
-        update_fns_answer(receipt_items, order_id)
+        if receipt_items:
+            update_fns_answer(receipt_items, order_id)
 
 
 def handle_failed_attempts(chat_id, receipt_id, request_to):
@@ -260,48 +262,50 @@ def handle_failed_attempts(chat_id, receipt_id, request_to):
 @job('default')
 @suppress(Receipt.DoesNotExist, ReceiptRecognitionOuterRequestStat.DoesNotExist)
 def report_recognized_qr_code(chat_id, receipt_id, order_id, **options):
-    recognized_code = Receipt.objects.get(id=receipt_id).qr_recognized
+    with notify_rollbar(extra_data={'Номер чека': receipt_id}):
+        recognized_code = Receipt.objects.get(id=receipt_id).qr_recognized
 
-    if not recognized_code:
-        return handle_failed_attempts(chat_id, receipt_id, 'dynamsoft')
+        if not recognized_code:
+            return handle_failed_attempts(chat_id, receipt_id, 'dynamsoft')
 
-    recognized_status = 'qr код успешно распознан'
-    dynamsoft_attempt = \
-        ReceiptRecognitionOuterRequestStat.objects.successful().filter(
-            receipt__id=receipt_id, request_to='dynamsoft'
-        ).get()
-    recognized_time = (dynamsoft_attempt.end_time - dynamsoft_attempt.start_time)
-    text_message = textwrap.dedent(f'''
-    - Статус распознавания: {recognized_status},
-    {recognized_code}
-    - Время распознавания qr кода: {recognized_time.seconds}.{recognized_time.microseconds},
-    ''')
-    send_message_to_nr(chat_id, text_message)
+        recognized_status = 'qr код успешно распознан'
+        dynamsoft_attempt = \
+            ReceiptRecognitionOuterRequestStat.objects.successful().filter(
+                receipt__id=receipt_id, request_to='dynamsoft'
+            ).get()
+        recognized_time = (dynamsoft_attempt.end_time - dynamsoft_attempt.start_time)
+        text_message = textwrap.dedent(f'''
+        - Статус распознавания: {recognized_status},
+        {recognized_code}
+        - Время распознавания qr кода: {recognized_time.seconds}.{recognized_time.microseconds},
+        ''')
+        send_message_to_nr(chat_id, text_message)
 
 
 @job('default')
 @suppress(FnsOrder.DoesNotExist, ReceiptRecognitionOuterRequestStat.DoesNotExist)
 def report_fns_api(chat_id, receipt_id, order_id, **options):
-    fns_answer = FnsOrder.objects.get(id=order_id).answer
+    with notify_rollbar(extra_data={'Номер чека': receipt_id}):
+        fns_answer = FnsOrder.objects.get(id=order_id).answer
 
-    if not fns_answer:
-        return handle_failed_attempts(chat_id, receipt_id, 'fns_api')
+        if not fns_answer:
+            return handle_failed_attempts(chat_id, receipt_id, 'fns_api')
 
-    fns_api_attempt = \
-        ReceiptRecognitionOuterRequestStat.objects.successful().filter(
-            receipt__id=receipt_id, request_to='fns_api'
-        ).get()
-    recognized_time = (fns_api_attempt.end_time - fns_api_attempt.start_time)
+        fns_api_attempt = \
+            ReceiptRecognitionOuterRequestStat.objects.successful().filter(
+                receipt__id=receipt_id, request_to='fns_api'
+            ).get()
+        recognized_time = (fns_api_attempt.end_time - fns_api_attempt.start_time)
 
-    products = "\n".join([
-        f'🛒 {item["name"]}: {item["quantity"]} шт, {item["price"]/100} ₽' for item in fns_answer['content']['items']
-    ])
+        products = "\n".join([
+            f'🛒 {item["name"]}: {item["quantity"]} шт, {item["price"]/100} ₽' for item in fns_answer['content']['items']
+        ])
 
-    message = [
-        'Результат запроса в налоговую:',
-        products,
-        f'Время получения ответа ФНС: {recognized_time.seconds}.{recognized_time.microseconds}',
-    ]
+        message = [
+            'Результат запроса в налоговую:',
+            products,
+            f'Время получения ответа ФНС: {recognized_time.seconds}.{recognized_time.microseconds}',
+        ]
 
-    send_message_to_nr(chat_id, '\n\n'.join(message))
-    send_message_to_nr(chat_id, f'Результат запроса в формате JSON:\n\n{fns_answer}')
+        send_message_to_nr(chat_id, '\n\n'.join(message))
+        send_message_to_nr(chat_id, f'Результат запроса в формате JSON:\n\n{fns_answer}')
