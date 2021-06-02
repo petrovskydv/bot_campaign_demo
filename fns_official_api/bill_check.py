@@ -16,6 +16,10 @@ from draw_app.custom_exceptions import (
     FnsGetTemporaryTokenError,
     FnsNoDataYetError,
     FnsQRError,
+    FnsNotAvailable,
+    FnsCashboxCompleteError,
+    FnsInternalError,
+    FnsProcessing,
 )
 
 
@@ -215,10 +219,35 @@ def get_purchases(qr_recognized, message_id=None):
     if status == FNS_RESPONSE_COMPLETED:
         code = soup.find('Code').text
         if code == '200':
+            # Все ОК
             purchases = soup.find('Ticket').text
             return json.loads(purchases)
 
+        if code == '455':
+            # Чек ещё не успел попасть в хранилище ФНС России.
+            # Следует повторить запрос через 5, 15, 40, 60 минут,
+            # потом через 3, 9, 10 часов. Если чек всё ещё не найден –
+            # перестать отправлять запросы. Чек, поступивший позднее
+            # должен считаться поступившим с нарушениями.
+            raise FnsNoDataYetError
+
+        if code == '544':
+            # Касса не завершила регистрационные действия.
+            # Стоит однократно повторить запрос через 24 часа
+            raise FnsCashboxCompleteError
+
+        if code in ['503', '532', '527']:
+            # Сервис недоступен/высокая нагрузка на сервис,
+            # повторить отправку запроса
+            raise FnsNotAvailable
+
+        if code in ['529', '530', '531', '532', '533', '543']:
+            # Внутренняя ошибка сервиса, повторить отправку запроса
+            raise FnsInternalError
+
+        # Ошибка проверки чека, формат отправленных данных некорректен,
+        # повторять запрос не нужно
         raise FnsQRError
 
     if status == FNS_RESPONSE_PROCESSING:
-        raise FnsNoDataYetError
+        raise FnsProcessing

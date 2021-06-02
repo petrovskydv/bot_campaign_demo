@@ -29,11 +29,15 @@ from draw_app.extra_functools import suppress
 from draw_app.notify_rollbar import notify_rollbar
 from draw_app.custom_exceptions import (
     QrCodeNoDataError,
-    FnsQRError,
-    FnsNoDataYetError,
     QrCodeNotValidError,
     QualitySettingNotFilled,
     FnsGetTemporaryTokenError,
+    FnsNoDataYetError,
+    FnsQRError,
+    FnsNotAvailable,
+    FnsCashboxCompleteError,
+    FnsInternalError,
+    FnsProcessing,
 )
 
 from fns_official_api.bill_check import get_purchases
@@ -74,27 +78,42 @@ def repr_exceptions(exc):
         Ошибка распознавания QR-кода, проверьте загруженное изображение и
         по возможности сфотографируйте заново.
         ''')
-    elif isinstance(exc, FnsQRError):
-        return textwrap.dedent(r'''
-        Ваш QR-код мы распознали, но информация на нем,
-        не соответствует полученной из налогового органа.
-        ''')
-    elif isinstance(exc, FnsNoDataYetError):
-        return r'''
-        Ваш QR-код мы распознали, но в налоговой еще нет информации о нем.'''
+
     elif isinstance(exc, QrCodeNotValidError):
-        return r'''
-        Ваш QR-код мы распознали, но похоже, что он не от чека с покупками.'''
+        return 'Ваш QR-код мы распознали, но похоже, что он не от чека с покупками'
+
     elif isinstance(exc, QualitySettingNotFilled):
-        return r'''Не заполнена настройка качества распознавания QR-кодов.'''
+        return 'Не заполнена настройка качества распознавания QR-кодов'
+
     elif isinstance(exc, (requests.HTTPError, requests.ConnectionError)):
-        return r'''Сервис в данный момент не доступен.'''
+        return 'Проблема с соединением'
+
     elif isinstance(exc, Receipt.DoesNotExist):
-        return r'''Чек отсутствует или удален в базе данных.'''
+        return 'Чек отсутствует или удален в базе данных'
+
     elif isinstance(exc, FnsOrder.DoesNotExist):
-        return r'''Заказ в налоговую отсутствует или удален в базе данных.'''
+        return 'Заказ в налоговую отсутствует или удален в базе данных'
+
+    elif isinstance(exc, FnsQRError):
+        return 'Ошибка проверки чека, формат отправленных данных некорректен'
+
+    elif isinstance(exc, FnsNoDataYetError):
+        return 'Чек ещё не успел попасть в хранилище ФНС России'
+
     elif isinstance(exc, FnsGetTemporaryTokenError):
-        return r'''Ошибка при получении временного токена в налоговой'''
+        return 'Ошибка при получении временного токена'
+
+    elif isinstance(exc, FnsNotAvailable):
+        return 'Сервис налоговой недоступен/высокая нагрузка на сервис'
+
+    elif isinstance(exc, FnsCashboxCompleteError):
+        return 'Касса не завершила регистрационные действия'
+
+    elif isinstance(exc, FnsInternalError):
+        return 'Внутренняя ошибка сервиса'
+
+    elif isinstance(exc, FnsProcessing):
+        return 'Запрос в обработке'
 
 
 def handle_recognition_attempt(request_to):

@@ -21,3 +21,19 @@ class FnsNoDataYetError(Exception):
 
 class FnsGetTemporaryTokenError(Exception):
     pass
+
+
+class FnsNotAvailable(Exception):
+    pass
+
+
+class FnsCashboxCompleteError(Exception):
+    pass
+
+
+class FnsInternalError(Exception):
+    pass
+
+
+class FnsProcessing(Exception):
+    pass
