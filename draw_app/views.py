@@ -8,7 +8,7 @@ from rest_framework.decorators import api_view
 from rest_framework.serializers import Serializer, CharField
 
 from .tasks import (
-    handle_image, handle_barcode_official
+    handle_image, handle_fns_message_id, handle_get_purchases
 )
 
 from .models import (
@@ -50,9 +50,17 @@ def handle_receipt_image(request):
         receipt_id, order_id = create_receipt_and_raw_order(current_customer, image)
         if receipt_id and order_id:
             handle_image_task = handle_image.delay(chat_id, receipt_id, order_id)
-            handle_barcode_official.delay(
-                chat_id, receipt_id, order_id, depends_on=handle_image_task
+
+            message_id_task = handle_fns_message_id.delay(
+                chat_id, receipt_id, order_id,
+                depends_on=handle_image_task
             )
+
+            handle_get_purchases.delay(
+                chat_id, receipt_id, order_id,
+                depends_on=message_id_task
+            )
+
         return JsonResponse({'replay': 'ok'}, status=200)
     return JsonResponse(serializer.errors, status=400)
 
