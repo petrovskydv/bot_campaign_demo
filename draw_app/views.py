@@ -77,7 +77,14 @@ def handle_purchases(request, tg_chat_id):
     purchases = []
 
     for fns_order in fns_orders:
-        product_names = [product['name'] for product in fns_order.answer.values()]
-        purchases.append(', '.join(product_names))
+        content = fns_order.answer.get('content')
 
-    return JsonResponse({'purchases': '\n\n'.join(purchases)}, status=200)
+        if not content:
+            continue
+
+        for item in content['items']:
+            purchases.append(
+                f'🛒 {item["name"]}: {item["quantity"]} шт, {item["price"]/100} ₽'
+            )
+
+    return JsonResponse({'purchases': '\n'.join(purchases)}, status=200)
